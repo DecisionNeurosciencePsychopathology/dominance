@@ -29,7 +29,7 @@ View(gtn2)
 
 
 # create .Rda files from excel datasets. Skip this part if starting from the GitHub folder where the files are already created
-gtn2 <- read_excel("data3/dataNew4-2.xlsx")
+gtn2 <- read_excel("data3/dataNew4-2b.xlsx")
 View(gtn2)
 
 # format missing values
@@ -91,18 +91,25 @@ par(mfrow=c(2,4))
 ## model for opponent choice
 sink("appleChoice_model.txt",append=FALSE, split=FALSE)
 
-# best-fitting models for apple choice (mapples3i, mapples3p), possible 3-way interaction in mapple3p
+# best-fitting models for apple choice (mapples3i)
 mapple3i <- lmer(appleChoice ~ trial + win.minus1 + rankStart + (1|ID),  data = gtn2, na.action = na.omit)
 summary(mapple3i)
 car::Anova(mapple3i)
+
+sink()
 
 mapple3p <- lmer(appleChoice ~ win.minus1 + rankStart + oppRank*sinkChoice.minus1*trial + (1|ID),  data = gtn2, na.action = na.omit)
 summary(mapple3p)
 car::Anova(mapple3p)
 
-anova(mapple3i, mapple3p)
 
-sink()
+mapple3p2 <- lmer(appleChoice ~ win.minus1 + rankStart + oppRank*sinkChoice.minus1 + trial + (1|ID),  data = gtn2, na.action = na.omit)
+summary(mapple3p2)
+car::Anova(mapple3p2)
+
+anova(mapple3i, mapple3p2)
+
+
 
 mapple3q <- lmer(appleChoice ~ win.minus1 + rankStart + appleChoice.minus1*oppRank + (1|ID),  data = gtn2, na.action = na.omit)
 summary(mapple3q)
@@ -175,6 +182,10 @@ msink3d <- lmer(sinkChoice ~ oppRank*win + win*trial + trial*appleChoice + oppRa
 summary(msink3d)
 car::Anova(msink3d)
 
+msink3d2 <- lmer(sinkChoice ~ oppRank*win + win*trial + appleChoice + oppRank*sinkChoice.minus1 + win*sinkChoice.minus1 + (1|ID),  data = gtn2, na.action = na.omit)
+summary(msink3d2)
+car::Anova(msink3d2)
+
 anova(msink3c, msink3d)
 
 msink3e <- lmer(sinkChoice ~ oppRank*win + win*trial + oppRank*sinkChoice.minus1 + (1|ID),  data = gtn2, na.action = na.omit)
@@ -191,36 +202,47 @@ msink3h <- lmer(sinkChoice ~ oppRank*win + win*trial + oppRank*sinkChoice.minus1
 summary(msink3e)
 car::Anova(msink3e)
 
+msink3g2 <- lmer(sinkChoice ~ appleChoice*sinkChoice.minus1 + oppRank*win*sinkChoice.minus1 + win*trial + (1|ID),  data = gtn2, na.action = na.omit)
+summary(msink3g2)
+car::Anova(msink3g2)
+
 sink("sinkChoice_model.txt",append=FALSE, split=FALSE)
-#best-fitting models: msink3e and msink3g, significant 3-way interaction in msink3g
-msink3e <- lmer(sinkChoice ~ oppRank*win + win*trial + oppRank*sinkChoice.minus1 + (1|ID),  data = gtn2, na.action = na.omit)
-summary(msink3e)
-car::Anova(msink3e)
+#best-fitting models
 
-msink3g <- lmer(sinkChoice ~ oppRank*win*sinkChoice.minus1 + win*trial + (1|ID),  data = gtn2, na.action = na.omit)
-summary(msink3g)
-car::Anova(msink3g)
+msink3e2 <- lmer(sinkChoice ~ oppRank*win + win*trial + appleChoice*sinkChoice.minus1 + oppRank*sinkChoice.minus1 + (1|ID),  data = gtn2, na.action = na.omit)
+summary(msink3e2)
+car::Anova(msink3e2)
 
-anova(msink3e, msink3g)
+msink3g3 <- lmer(sinkChoice ~ appleChoice*sinkChoice.minus1 + oppRank*win + win*sinkChoice.minus1 + sinkChoice.minus1*oppRank + win*trial + (1|ID),  data = gtn2, na.action = na.omit)
+summary(msink3g3)
+car::Anova(msink3g3)
+
+anova(msink3e2, msink3g3)
 
 sink()
 
 # plot oppRank by win interaction
 pdf("V4-2-win-oppRank.pdf", width=10, height=5)
-ls_msink3e <- lsmeans(msink3e,"oppRank", by = "win", cov.reduce = FALSE)
-plot(ls_msink3e, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "oppRank")
+ls_msink3e2 <- lsmeans(msink3e2,"oppRank", by = "win", cov.reduce = FALSE)
+plot(ls_msink3e2, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "oppRank")
 dev.off()
 
-# plot oppRank by win interaction
+# plot trial by win interaction
 pdf("V4-2-win-trial.pdf", width=10, height=5)
-ls_msink3e2 <- lsmeans(msink3e,"trial", by = "win", cov.reduce = FALSE)
-plot(ls_msink3e2, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "trial")
+ls_msink3e1 <- lsmeans(msink3e2,"trial", by = "win", cov.reduce = FALSE)
+plot(ls_msink3e1, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "trial")
 dev.off()
 
 # plot oppRank by sinkChoice.minus1 interaction
 pdf("V4-2-oppRank-previoussinkChoice.pdf", width=10, height=5)
-ls_msink3e3 <- lsmeans(msink3e,"oppRank", by = "sinkChoice.minus1", cov.reduce = FALSE)
+ls_msink3e3 <- lsmeans(msink3e2,"oppRank", by = "sinkChoice.minus1", cov.reduce = FALSE)
 plot(ls_msink3e3, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "oppRank")
+dev.off()
+
+# plot appleChoice by sinkChoice.minus1 interaction
+pdf("V4-2-appleChoice-previoussinkChoice.pdf", width=10, height=5)
+ls_msink3e4 <- lsmeans(msink3e2,"appleChoice", by = "sinkChoice.minus1", cov.reduce = FALSE)
+plot(ls_msink3e4, type ~ sinkChoice, horiz=F,ylab = "sinkChoice", xlab = "appleChoice")
 dev.off()
 
 # plot win by rankStart interaction
