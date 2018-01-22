@@ -46,7 +46,7 @@ library(arm)
 
 
 ## set working directory (where you have the participants' output data files )
-setwd("/home/anna/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data")
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data")
 
 # wd for Alex
 #setwd("~/code//dominance")
@@ -125,6 +125,14 @@ snake_ds <- snake_ds %>% group_by(ID) %>% mutate(appleChoiceDelta.minus1 = lag(a
 
 save(snake_ds,file="snake_ds.Rda")
 
+# missingness
+library(mice)
+md.pattern(snake_ds)
+
+library(VIM)
+snake_ds_aggr = aggr(snake_ds, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(snake_ds), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+
+
 # distribution.
 par(mfrow=c(2,4))
 summary(snake_ds$gender)
@@ -140,105 +148,6 @@ hist(snake_ds$rankChoice,
          ylab = "trials")
 
 
-## linear mixed-effect models for apple choice
-
-mapple1 <- lmer(appleChoice ~ trial + win.minus1 + win.minus2 + close.minus1 + oppRank + rankStart + gender + age + gameExp + rankEstim1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + enjoyed + satisfied + fair + credible + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple1)
-car::Anova(mapple1)
-
-mapple2 <- lmer(appleChoice ~ trial + win.minus1 + win.minus2 + close.minus1 + oppRank + gender + age + rankEstim1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + enjoyed + satisfied + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple2)
-car::Anova(mapple2)
-
-anova(mapple1, mapple2)
-
-mapple3 <- lmer(appleChoice ~ trial + win.minus2 + oppRank + gender + rankEstim1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + enjoyed + satisfied + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple3)
-car::Anova(mapple3)
-
-anova(mapple2, mapple3)
-
-#to print output in .txt file
-sink("appleChoice_model.txt",append=FALSE, split=FALSE)
-
-# preferred model: mapple4
-mapple4 <- lmer(appleChoice ~ trial + oppRank + gender + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*win.minus1 + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple4)
-car::Anova(mapple4)
-
-#to stop prinitng output
-sink()
-
-anova(mapple3, mapple4)
-
-mapple5 <- lmer(appleChoice ~ trial + oppRank + gender + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*win.minus1*trial + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple5)
-car::Anova(mapple4)
-
-anova(mapple4, mapple5)
-
-mapple6 <- lmer(appleChoice ~ trial + oppRank + gender + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*trial + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple6)
-car::Anova(mapple6)
-
-anova(mapple4, mapple6)
-
-mapple7 <- lmer(appleChoice ~ trial + oppRank + gender + scoreDelta.minus1 + rankChoice.minus1 + rankEstim1*appleChoice.minus1*win.minus1 + fair + (1|ID),  data = snake_ds, na.action = na.omit)
-summary(mapple7)
-car::Anova(mapple7)
-
-anova(mapple4, mapple7)
-
-# plot interactions
-plot(effect("win.minus1:appleChoice.minus1",mapple4), grid=TRUE)
-
-plot(effect("rankEstim1:win.minus1",mapple4), grid=TRUE)
-
-
-## linear mixed-effect models for booster choice
-mboost1 <- lmer(rankChoice ~ trial + win + win.minus1 + close + oppRank + rankStart + gender + age + gameExp + rankEstim1 + scoreDelta + rankChoice.minus1 + rankChoice.minus2 + appleChoice + enjoyed + satisfied + fair + credible + (1|ID),  data = snake_ds, na.action = na.omit) 
-summary(mboost1)
-car::Anova(mboost1)
-
-mboost2 <- lmer(rankChoice ~ trial + win + close + oppRank + rankStart + scoreDelta + rankChoice.minus1 + rankChoice.minus2 + appleChoice + satisfied + (1|ID),  data = snake_ds, na.action = na.omit) 
-summary(mboost2)
-car::Anova(mboost2)
-
-anova(mboost1, mboost2)
-
-mboost3 <- lmer(rankChoice ~ trial + win + close + rankChoice.minus1 + rankChoice.minus2 + appleChoice + satisfied + (1|ID),  data = snake_ds, na.action = na.omit) 
-summary(mboost3)
-car::Anova(mboost3)
-
-anova(mboost2, mboost3)
-
-mboost4 <- lmer(rankChoice ~ win*rankChoice.minus1 + close + win*rankChoice.minus2 + win*appleChoice + satisfied + (1|ID),  data = snake_ds, na.action = na.omit) 
-summary(mboost4)
-car::Anova(mboost4)
-
-anova(mboost3, mboost4)
-
-sink("boosterChoice_model.txt",append=FALSE, split=FALSE)
-
-#preferred model
-mboost5 <- lmer(rankChoice ~ win*rankChoice.minus1 + rankChoice.minus2 + win*appleChoice + satisfied + (1|ID),  data = snake_ds, na.action = na.omit) 
-summary(mboost5)
-car::Anova(mboost5)
-
-sink()
-
-anova(mboost4, mboost5)
-
-# plot interactions (commented because bugging)
-#pdf("V4-2-win-oppRank.pdf", width=10, height=5)
-plot(effect("win:rankChoice.minus1",mboost5), grid=TRUE)
-plot(effect("win:appleChoice",mboost5), grid=TRUE)
-#dev.off()
-
-##############################
-### narcissism measures ######
-##############################
-
 # preparing and adding the dataset with demographic info and narcissistic questionnaires (hamilton still to be added)
 snake_suppl <- read_excel("snake_suppl2.xlsx")
 View(snake_suppl)
@@ -248,9 +157,16 @@ snake_suppl <- transform(snake_suppl, ID = as.factor(ID), comment0 = as.factor(c
 snake_suppl <- transform(snake_suppl, cDate = as.Date(cDate), dob = as.Date(dob), baseline_consent_date = as.factor(baseline_consent_date), snake_date = as.factor(snake_date))
 
 snake_suppl$ffni <- rowSums(snake_suppl[, 18:77], na.rm = FALSE)
-snake_suppl$ipip <- rowSums(snake_suppl[, 78], (6-snake_suppl[, 79]),  na.rm = FALSE)
 snake_suppl$inv.ipip2 <- 6-snake_suppl[, 79]
 snake_suppl$ipip <- rowSums(snake_suppl[, c("ipip1", "inv.ipip2", "ipip3", "ipip4", "ipip5", "ipip6", "ipip7", "ipip8", "ipip9", "ipip10", "ipip11")], na.rm = FALSE)
+
+save(snake_suppl,file="snake_suppl.Rda")
+
+library(corrplot)
+chars <- snake_suppl[,c(6,15,89,90,91,92,94)]
+cormat <- corr.test(chars)
+
+
 
 snake_tot <- left_join(snake_ds, snake_suppl, by=c("ID"))
 View(snake_tot)
@@ -264,51 +180,763 @@ hist(snake_tot$ipip)
 hist(snake_tot$ffni)
 hist(snake_tot$bpni_grandiose)
 hist(snake_tot$bpni_vulnerable)
-hist(log(snake_tot$bpni_grandiose))
-hist(log(snake_tot$bpni_vulnerable))
+hist(snake_tot$bpni_total)
 
-###adding narcissistic measures to models (use log for BPNI?)
-
-##apple choice
-mapple4_tot <- lmer(appleChoice ~ trial + oppRank + gender.y + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*win.minus1 + fair + ipip + ffni + bpni_grandiose + bpni_vulnerable + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mapple4_tot)
-car::Anova(mapple4_tot)
-
-#best model for now, but more thorough analysis required
-mapple4_tot2 <- lmer(appleChoice ~ trial + oppRank + gender.y + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*win.minus1 + fair + ipip*oppRank + ffni*oppRank + bpni_grandiose*oppRank + bpni_vulnerable*oppRank + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mapple4_tot2)
-car::Anova(mapple4_tot2)
-
-mapple4_tot3 <- lmer(appleChoice ~ trial + oppRank + gender.y + rankEstim1*win.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*win.minus1 + fair + ipip*win.minus1 + ffni*win.minus1 + bpni_grandiose*win.minus1 + bpni_vulnerable*win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mapple4_tot3)
-car::Anova(mapple4_tot3)
-
-#interactions
-plot(effect("oppRank:ipip",mapple4_tot2), grid=TRUE)
-plot(effect("oppRank:ffni",mapple4_tot2), grid=TRUE)
-plot(effect("oppRank:bpni_grandiose",mapple4_tot2), grid=TRUE)
-plot(effect("oppRank:bpni_vulnerable",mapple4_tot2), grid=TRUE)
-plot(effect("win.minus1:bpni_vulnerable",mapple4_tot3), grid=TRUE)
+#building models by blocks
+## BLOCK1: design variables
+# correlation matrix for design variables
+chars <- snake_tot[,c(20,21,22,23,27,28,29)]
+cormat <- corr.test(chars)
+names(snake_tot)
 
 
-#rank choice
-mboost5_tot <- lmer(rankChoice ~ win*rankChoice.minus1 + rankChoice.minus2 + win*appleChoice + satisfied + ipip + ffni + bpni_grandiose + bpni_vulnerable + (1|ID),  data = snake_tot, na.action = na.omit) 
-summary(mboost5_tot)
-car::Anova(mboost5_tot)
+# univariate models
+uv_apple <- lmer(appleChoice ~ trial + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
 
-#best model of these three, but more thorough analysis required
-mboost5_tot2 <- lmer(rankChoice ~ win*rankChoice.minus1 + rankChoice.minus2 + win*appleChoice + satisfied + ipip*win + ffni*win + bpni_grandiose*win + bpni_vulnerable*win + (1|ID),  data = snake_tot, na.action = na.omit) 
-summary(mboost5_tot2)
-car::Anova(mboost5_tot2)
+uv_apple <- lmer(appleChoice ~ win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
 
-mboost5_tot3 <- lmer(rankChoice ~ win*rankChoice.minus1 + rankChoice.minus2 + win*appleChoice + satisfied + ipip*rankStart + ffni*rankStart + bpni_grandiose*rankStart + bpni_vulnerable*rankStart + (1|ID),  data = snake_tot, na.action = na.omit) 
-summary(mboost5_tot3)
-car::Anova(mboost5_tot3)
+uv_apple <- lmer(appleChoice ~ win.minus2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
 
-mboost5_tot4 <- lmer(rankChoice ~ win*rankChoice.minus1 + rankChoice.minus2 + win*appleChoice + satisfied + ipip*trial + ffni*trial + bpni_grandiose*trial + bpni_vulnerable*trial + (1|ID),  data = snake_tot, na.action = na.omit) 
-summary(mboost5_tot4)
-car::Anova(mboost5_tot4)
+uv_apple <- lmer(appleChoice ~ close.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
 
-#interactions
-plot(effect("win:bpni_grandiose",mboost5_tot2), grid=TRUE)
-plot(effect("win:bpni_vulnerable",mboost5_tot2), grid=TRUE)
+uv_apple <- lmer(appleChoice ~ oppRank + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ rankStart + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ scoreDelta.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ scoreDiff.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ score.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ rankChoice.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ appleChoice.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+# multivariate model
+mapple1 <- lmer(appleChoice ~ trial + win.minus1 + close.minus1 + oppRank + rankStart + scoreDelta.minus1 + score.minus1 + rankChoice.minus1 + appleChoice.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple1)
+car::Anova(mapple1)
+
+mapple2 <- lmer(appleChoice ~ trial + oppRank + scoreDelta.minus1 + score.minus1 + rankChoice.minus1 + appleChoice.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple2)
+car::Anova(mapple2)
+
+anova(mapple1, mapple2)
+
+mapple3 <- lmer(appleChoice ~ trial + win.minus1 + oppRank + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple3)
+car::Anova(mapple3)
+
+anova(mapple1, mapple3)
+
+mapple4 <- lmer(appleChoice ~ trial + win.minus1 + oppRank + scoreDiff.minus1 + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple4)
+car::Anova(mapple4)
+
+anova(mapple3, mapple4)
+
+# checking for interactions
+## no significant interactions with win.minus1 (all possibilities checked)
+mapple5 <- lmer(appleChoice ~ trial*win.minus1 + oppRank + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple5)
+car::Anova(mapple5)
+
+## no significant interactions with trial (all possibilities checked)
+mapple6 <- lmer(appleChoice ~ oppRank + scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*trial + win.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple6)
+car::Anova(mapple6)
+
+## no significant interactions with oppRank (all possibilities checked)
+mapple7 <- lmer(appleChoice ~ scoreDelta.minus1 + rankChoice.minus1 + appleChoice.minus1*oppRank + trial + win.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple7)
+car::Anova(mapple7)
+
+## no significant interactions with scoreDelta.minus1 (all possibilities checked)
+mapple8 <- lmer(appleChoice ~  rankChoice.minus1 + appleChoice.minus1*scoreDelta.minus1 + oppRank + trial + win.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple8)
+car::Anova(mapple8)
+
+## significant interactions between rankChoice.minus1 and appleChoice.minus1
+mapple9 <- lmer(appleChoice ~  rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + oppRank + trial + win.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mapple9)
+car::Anova(mapple9)
+
+anova(mapple3, mapple9)
+
+# best model mapple9; plot interaction
+plot(effect("rankChoice.minus1:appleChoice.minus1",mapple9), grid=TRUE)
+
+##BLOCK2: demographics (age, gender education, snake_level, group1_5)
+# univariate models
+names(snake_tot)
+
+uv_apple <- lmer(appleChoice ~ age + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ education + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ snakeLevel + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ group1_5 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+lsm.apple_group <- lsmeans(uv_apple, "group1_5")
+contrast(lsm.apple_group, method = "pairwise", adjust ="tukey")
+plot(lsm.apple_group, type ~ snake_tot$group1_5, horiz=F, ylab = "appleChoice", xlab = "Group")
+
+#multivariate model
+mapple1.2 <- lmer(appleChoice ~ group1_5 + gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.2)
+car::Anova(mapple1.2)
+
+anova(mapple1.2, uv_apple)
+
+mapple2.2 <- lmer(appleChoice ~ group1_5*gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple2.2)
+car::Anova(mapple2.2)
+
+mapple3.2 <- lmer(appleChoice ~ group1_5 + gameExp + age + education + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple3.2)
+car::Anova(mapple3.2)
+
+anova(mapple1.2, mapple3.2)
+#not able to compute but 3.2 better based on residuals
+
+mapple4.2 <- lmer(appleChoice ~ group1_5 + gameExp + age + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.2)
+car::Anova(mapple4.2)
+
+#no significative difference between mapple1.2 and 4.2
+anova(mapple1.2, mapple4.2)
+
+## BLOCK3: emotional scales
+snake_tot$panas_pos1 <- rowSums(snake_tot[, c(10,14,16,19)], na.rm = FALSE)
+snake_tot$panas_pos2 <- rowSums(snake_tot[, c(32,36,38,41)], na.rm = FALSE)
+snake_tot$panas_scared1 <- rowSums(snake_tot[, c(11,12,17,18)], na.rm = FALSE)
+snake_tot$panas_scared2 <- rowSums(snake_tot[, c(33,34,39,40)], na.rm = FALSE)
+snake_tot$panas_angry1 <- rowSums(snake_tot[, c(13,15)], na.rm = FALSE)
+snake_tot$panas_angry2 <- rowSums(snake_tot[, c(35,37)], na.rm = FALSE)
+
+snake_tot$delta_rankEstim <-snake_tot$rankEstim2-snake_tot$rankEstim1
+
+snake_tot$delta_panas_angry <-snake_tot$panas_angry2-snake_tot$panas_angry1
+snake_tot$delta_panas_scared <-snake_tot$panas_scared2-snake_tot$panas_scared1 
+snake_tot$delta_panas_pos <-snake_tot$panas_pos2-snake_tot$panas_pos1
+
+chars <- snake_tot[,c(6,54,170,171,172,173,174,175,176,50,51,52,53)]
+cormat <- corr.test(chars)
+names(snake_tot)
+
+#univariate models
+uv_apple <- lmer(appleChoice ~ rankEstim1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ rankEstim2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ delta_rankEstim + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ fair + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ enjoyed + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ credible + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_pos1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_scared1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_scared2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_angry1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ panas_angry2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ delta_panas_angry + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ delta_panas_scared + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ delta_panas_pos + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+# multivariate model
+mapple1.3 <- lmer(appleChoice ~ rankEstim1 + rankEstim2 + satisfied + fair + enjoyed + panas_pos1 + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.3)
+car::Anova(mapple1.3)
+
+mapple2.3 <- lmer(appleChoice ~ rankEstim1 + rankEstim2 + fair + panas_pos1 + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple2.3)
+car::Anova(mapple2.3)
+
+anova(mapple1.3, mapple2.3)
+
+mapple3.3 <- lmer(appleChoice ~ rankEstim1 + fair + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple3.3)
+car::Anova(mapple3.3)
+
+anova(mapple2.3, mapple3.3)
+
+mapple4.3 <- lmer(appleChoice ~ fair + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.3)
+car::Anova(mapple4.3)
+
+anova(mapple3.3, mapple4.3)
+
+mapple4.3 <- lmer(appleChoice ~ fair*panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.3)
+car::Anova(mapple4.3)
+
+#best model: mapple 4.3
+
+## BLOCK 4: narcissistic scales
+uv_apple <- lmer(appleChoice ~ bpni_total + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ bpni_vulnerable + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ bpni_grandiose + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ ffni + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+uv_apple <- lmer(appleChoice ~ ipip + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_apple)
+car::Anova(uv_apple)
+
+mapple1.4 <- lmer(appleChoice ~ bpni_vulnerable + ipip + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.4)
+car::Anova(mapple1.4)
+
+anova(uv_apple, mapple1.4)
+
+## linear mixed-effect models for apple choice (preliminary)
+## BLOCKS 5 = 3 and 4
+mapple1.5 <- lmer(appleChoice ~ ipip + fair + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.5)
+car::Anova(mapple1.5)
+
+mapple2.5 <- lmer(appleChoice ~ ipip*fair + panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple2.5)
+car::Anova(mapple2.5)
+
+mapple3.5 <- lmer(appleChoice ~ fair + ipip*panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple3.5)
+car::Anova(mapple3.5)
+
+anova(mapple1.5, mapple3.5)
+#best model: mapple 3.5
+
+plot(effect("ipip:panas_pos2",mapple3.5), grid=TRUE)
+
+mapple4.5 <- lmer(appleChoice ~ fair*panas_pos2 + ipip + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.5)
+car::Anova(mapple4.5)
+
+## BLOCK 6 = 5 and 2
+mapple1.6 <- lmer(appleChoice ~ fair + ipip*panas_pos2 + group1_5 + gameExp + age + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.6)
+car::Anova(mapple1.6)
+
+mapple2.6 <- lmer(appleChoice ~ ipip*panas_pos2 + group1_5 + gameExp + age + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple2.6)
+car::Anova(mapple2.6)
+
+anova(mapple1.6, mapple2.6)
+
+mapple3.6 <- lmer(appleChoice ~ ipip*panas_pos2 + gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple3.6)
+car::Anova(mapple3.6)
+
+anova(mapple2.6, mapple3.6)
+
+mapple4.6 <- lmer(appleChoice ~ ipip*panas_pos2*gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.6)
+car::Anova(mapple4.6)
+
+anova(mapple4.6, mapple3.6)
+#best model mapple 3.6
+
+## Preliminary final model (BLOCK7 = BLOCKS 1 and 6)
+mapple1.7 <- lmer(appleChoice ~ ipip*panas_pos2 + gameExp + rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + oppRank + trial + win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple1.7)
+car::Anova(mapple1.7)
+
+mapple2.7 <- lmer(appleChoice ~ ipip*panas_pos2 + gameExp + rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + oppRank + trial + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple2.7)
+car::Anova(mapple2.7)
+
+anova(mapple1.7, mapple2.7)
+
+#checking for interactions:
+#interactions between gameExp and opponentRank
+mapple3.7 <- lmer(appleChoice ~ ipip*panas_pos2 + rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + gameExp*oppRank + trial + win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple3.7)
+car::Anova(mapple3.7)
+
+mapple4.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + scoreDelta.minus1 + oppRank + trial + win.minus1 + gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple4.7)
+car::Anova(mapple4.7)
+
+anova(mapple3.7, mapple4.7)
+
+mapple5.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + trial + win.minus1 + gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple5.7)
+car::Anova(mapple5.7)
+
+anova(mapple4.7, mapple5.7)
+#best model mapple5.7
+
+mapple6.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + trial + win.minus1 + oppRank*gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple6.7)
+car::Anova(mapple6.7)
+
+mapple7.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple7.7)
+car::Anova(mapple7.7)
+anova(mapple5.7, mapple7.7)
+
+mapple8.7 <- lmer(appleChoice ~ ipip*panas_pos2 + appleChoice.minus1 + panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple8.7)
+car::Anova(mapple8.7)
+
+anova(mapple7.7, mapple8.7)
+#mapple 7.7 best model
+
+plot(effect("ipip:oppRank",mapple7.7), grid=TRUE)
+
+mapple9.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + appleChoice.minus1*win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple9.7)
+car::Anova(mapple9.7)
+
+anova(mapple7.7, mapple9.7)
+#mapple 9.7 marginally better
+plot(effect("appleChoice.minus1:win.minus1",mapple9.7), grid=TRUE)
+
+mapple10.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + appleChoice.minus1*win.minus1*trial + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple10.7)
+car::Anova(mapple10.7)
+
+anova(mapple9.7, mapple10.7)
+#best model apple 10.7
+#to print output in .txt file
+#sink("appleChoice_model.txt",append=FALSE, split=FALSE)
+#to stop prinitng output
+#sink()
+
+##########################################################
+##################### booster choice #####################
+##########################################################
+
+# univariate models
+uv_rank <- lmer(rankChoice ~ trial + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ win + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ win.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ close + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ oppRank + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ rankStart + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ scoreDelta + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ scoreDiff + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ score + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ rankChoice.minus1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ rankChoice.minus2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+# multivariate model
+mrank1 <- lmer(rankChoice ~ trial + win + close + rankStart + scoreDiff + score + rankChoice.minus1 + rankChoice.minus2 + appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank1)
+car::Anova(mrank1)
+
+mrank2 <- lmer(rankChoice ~ rankStart*trial + win + close + scoreDiff + score + rankChoice.minus1 + rankChoice.minus2 + appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank2)
+car::Anova(mrank2)
+
+anova(mrank1, mrank2)
+plot(effect("rankStart:trial",mrank2), grid=TRUE)
+
+
+mrank3 <- lmer(rankChoice ~ rankStart*trial + win + close + scoreDiff + score + rankStart*rankChoice.minus1 + rankChoice.minus2 + appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank3)
+car::Anova(mrank3)
+
+anova(mrank2, mrank3)
+plot(effect("rankStart:rankChoice.minus1",mrank2), grid=TRUE)
+
+mrank4 <- lmer(rankChoice ~ rankStart*trial + win + close + scoreDiff + score + rankStart*rankChoice.minus1 + rankChoice.minus2 + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank4)
+car::Anova(mrank4)
+
+anova(mrank3, mrank4)
+plot(effect("rankStart:appleChoice",mrank4), grid=TRUE)
+
+mrank5 <- lmer(rankChoice ~ rankStart*trial + win + scoreDiff + score*close + rankStart*rankChoice.minus1 + rankChoice.minus2 + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank5)
+car::Anova(mrank5)
+
+anova(mrank4, mrank5)
+plot(effect("score:close",mrank5), grid=TRUE)
+
+mrank6 <- lmer(rankChoice ~ rankStart*trial + win + score*close + rankStart*rankChoice.minus1 + rankChoice.minus2*rankChoice.minus1 + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank6)
+car::Anova(mrank6)
+
+anova(mrank5, mrank6)
+plot(effect("rankChoice.minus1:rankChoice.minus2",mrank6), grid=TRUE)
+
+mrank7 <- lmer(rankChoice ~ rankStart*trial + win + score*close + rankStart*rankChoice.minus1 + rankChoice.minus2*rankChoice.minus1+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank7)
+car::Anova(mrank7)
+
+anova(mrank6, mrank7)
+plot(effect("score:rankChoice.minus2",mrank7), grid=TRUE)
+
+mrank8 <- lmer(rankChoice ~ rankStart*trial + score*close + rankStart*rankChoice.minus1 + rankChoice.minus2*rankChoice.minus1+ rankChoice.minus2*score*win + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank8)
+car::Anova(mrank8)
+
+anova(mrank7, mrank8)
+# mrank7 = better model
+
+mrank9 <- lmer(rankChoice ~ rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank9)
+car::Anova(mrank9)
+
+anova(mrank7, mrank9)
+# mrank9 + best model
+
+mrank10 <- lmer(rankChoice ~ rankStart*trial + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+summary(mrank10)
+car::Anova(mrank10)
+
+anova(mrank9, mrank10)
+
+
+##BLOCK2: demographics (age, gender education, snake_level, group1_5)
+# univariate models
+names(snake_tot)
+
+uv_rank <- lmer(rankChoice ~ age + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ education + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ snakeLevel + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ gameExp + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ group1_5 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ group1_7 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+lsm.rank_group <- lsmeans(uv_rank, "group1_7")
+contrast(lsm.rank_group, method = "pairwise", adjust ="tukey")
+plot(lsm.rank_group, type ~ snake_tot$group1_7, horiz=F, ylab = "rankChoice", xlab = "Group")
+
+#multivariate model
+mrank1.2 <- lmer(rankChoice ~ group1_5 + age + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.2)
+car::Anova(mrank1.2)
+
+## BLOCK3: emotional scales
+#univariate models
+uv_rank <- lmer(rankChoice ~ rankEstim1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ rankEstim2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ delta_rankEstim + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ fair + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ enjoyed + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ credible + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_pos1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_pos2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_scared1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_scared2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_angry1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ panas_angry2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ delta_panas_angry + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ delta_panas_scared + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ delta_panas_pos + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+# multivariate model
+mrank1.3 <- lmer(rankChoice ~ rankEstim2 + satisfied + fair + panas_scared1 + panas_scared2 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.3)
+car::Anova(mrank1.3)
+
+mrank2.3 <- lmer(rankChoice ~ rankEstim2 + satisfied + panas_scared1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank2.3)
+car::Anova(mrank2.3)
+
+anova(mrank1.3, mrank2.3)
+
+mrank3.3 <- lmer(rankChoice ~ rankEstim2 + satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank3.3)
+car::Anova(mrank3.3)
+
+anova(mrank2.3, mrank3.3)
+#mrank3.3 = best model
+
+mrank4.3 <- lmer(rankChoice ~ rankEstim2*satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank4.3)
+car::Anova(mrank4.3)
+
+## BLOCK 4: narcissistic scales
+uv_rank <- lmer(rankChoice ~ bpni_total + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ bpni_vulnerable + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ bpni_grandiose + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ ffni + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+uv_rank <- lmer(rankChoice ~ ipip + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(uv_rank)
+car::Anova(uv_rank)
+
+# multivariate models
+mrank1.4 <- lmer(rankChoice ~ bpni_vulnerable + ipip + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.4)
+car::Anova(mrank1.4)
+
+anova(uv_rank, mrank1.4)
+
+## linear mixed-effect models for apple choice (preliminary)
+## BLOCKS 5 = 3 and 4
+mrank1.5 <- lmer(rankChoice ~ ipip + rankEstim2 + satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.5)
+car::Anova(mrank1.5)
+
+mrank2.5 <- lmer(rankChoice ~ ipip + rankEstim2 + satisfied + panas_scared1 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank2.5)
+car::Anova(mrank2.5)
+
+mrank3.5 <- lmer(rankChoice ~ ipip + rankEstim2*satisfied + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank3.5)
+car::Anova(mrank3.5)
+
+anova(mrank1.5, mrank3.5)
+#marginally best model: mrank 3.5
+
+plot(effect("rankEstim2:satisfied",mrank3.5), grid=TRUE)
+
+## BLOCK 6 = 5 and 2
+mrank1.6 <- lmer(rankChoice ~ rankEstim2*satisfied + ipip + group1_5 + gameExp + age + gender.y + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.6)
+car::Anova(mrank1.6)
+
+
+mrank2.6 <- lmer(rankChoice ~ rankEstim2*satisfied + ipip + group1_5 + gameExp + age + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank2.6)
+car::Anova(mrank2.6)
+
+anova(mrank1.6, mrank2.6)
+
+#best model mrank 2.6
+
+## Preliminary final model (BLOCK7 = BLOCKS 1 and 6)
+mrank1.7 <- lmer(rankChoice ~ rankEstim2*satisfied + ipip + group1_5 + gameExp + age + rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.7)
+car::Anova(mrank1.7)
+
+mrank2.7 <- lmer(rankChoice ~ rankEstim2*satisfied*ipip + group1_5 + gameExp + age + rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank2.7)
+car::Anova(mrank2.7)
+
+anova(mrank1.7, mrank2.7)
+
+mrank3.7 <- lmer(rankChoice ~ rankEstim2*satisfied + group1_5 + gameExp + age + rankStart*trial*ipip + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank3.7)
+car::Anova(mrank3.7)
+
+anova(mrank2.7, mrank3.7)
+# mrank2.7 better model
+
+mrank4.7 <- lmer(rankChoice ~ rankEstim2*satisfied*ipip + rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank4.7)
+car::Anova(mrank4.7)
+
+anova(mrank2.7, mrank4.7)
+# mrank 4.7 non-significantly better model
+
+mrank5.7 <- lmer(rankChoice ~ rankEstim2*satisfied*ipip + rankStart*trial + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank5.7)
+car::Anova(mrank5.7)
+
+anova(mrank4.7, mrank5.7)
+#mrank4.7 = better model
