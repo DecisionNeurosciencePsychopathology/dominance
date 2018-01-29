@@ -58,7 +58,7 @@ rm(list=ls())
 ## load datafile and skip to line 126 (use only if data has already been prepared previously, otherwise run lines 64 to 126) 
 load("snake_ds.Rda")
 View(snake_ds)
-
+load("snake_tot.Rda")
 
 ## create .Rda file by combining the participants' output files. Skip this part until line 101 if the dataset has already been created)
 #the following command reads a table with the participants'ids, which are also their output files' names (the files are named [id].csv); this file should be in the working directory
@@ -163,10 +163,18 @@ snake_suppl$ipip <- rowSums(snake_suppl[, c("ipip1", "inv.ipip2", "ipip3", "ipip
 save(snake_suppl,file="snake_suppl.Rda")
 
 library(corrplot)
+load("snake_suppl.Rda")
 chars <- snake_suppl[,c(6,15,89,90,91,92,94)]
 cormat <- corr.test(chars)
 
+chars <- snake_suppl[,c(89,90,91,92,94)]
+cormat <- corr.test(chars)
 
+snake_healthy <- snake_suppl[snake_suppl$group1_5 == "1",]
+View(snake_healthy)
+
+chars <- snake_healthy[,c(89,90,91,92,94)]
+cormat <- corr.test(chars)
 
 snake_tot <- left_join(snake_ds, snake_suppl, by=c("ID"))
 View(snake_tot)
@@ -176,11 +184,33 @@ load("snake_tot.Rda")
 
 #distribution
 summary(snake_tot$group1_5)
-hist(snake_tot$ipip)
+
+par(mfrow=c(4,2))
+
+hist(snake_suppl$ipip, xlab = "whole sample (23 HC, 3 DC, 8 Ideators, 8 attempters)", main = "IPIP-Dominance Scale", density = 25)
+hist(snake_healthy$ipip, xlab = "23 healthy controls", main = "IPIP-Domincance scale", density = 25)
+
+hist(snake_suppl$ffni, xlab = "whole sample (23 HC, 3 DC, 8 Ideators, 8 attempters)", main = "FFNI", density = 25)
+hist(snake_healthy$ffni, xlab = "23 healthy controls", main = "FFNI", density = 25)
+
+hist(snake_suppl$bpni_grandiose, xlab = "whole sample (23 HC, 3 DC, 8 Ideators, 8 attempters)", main = "BPNI grandiose subscale", density = 25)
+hist(snake_healthy$bpni_grandiose, xlab = "23 healthy controls", main = "BPNI grandiose subscale", density = 25)
+
+hist(snake_suppl$bpni_vulnerable, xlab = "whole sample (23 HC, 3 DC, 8 Ideators, 8 attempters)", main = "BPNI vulnerable subscale", density = 25)
+hist(snake_healthy$bpni_vulnerable, xlab = "23 healthy controls", main = "BPNI vulnerable subscale", density = 25)
+
+
+
 hist(snake_tot$ffni)
 hist(snake_tot$bpni_grandiose)
 hist(snake_tot$bpni_vulnerable)
 hist(snake_tot$bpni_total)
+hist(snake_tot$rankChoice, xlab = "Rank Choice", main = "Distribution of Rank (booster) choice", density = 25)
+hist(snake_tot$appleChoice, xlab = "Apple Choice", main = "Distribution of Apple stealing choice", density = 25)
+table(snake_tot$group1_5)
+552/24
+72/24
+192/24
 
 #building models by blocks
 ## BLOCK1: design variables
@@ -280,11 +310,15 @@ summary(mapple8)
 car::Anova(mapple8)
 
 ## significant interactions between rankChoice.minus1 and appleChoice.minus1
-mapple9 <- lmer(appleChoice ~  rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + oppRank + trial + win.minus1 + (1|ID),  data = snake_ds, na.action = na.omit)
+mapple9 <- lmer(appleChoice ~  rankChoice.minus1*appleChoice.minus1 + scoreDelta.minus1 + oppRank + trial + win.minus1 + (appleChoice.minus1 + trial |ID),  data = snake_tot, na.action = na.omit)
 summary(mapple9)
 car::Anova(mapple9)
 
 anova(mapple3, mapple9)
+
+mapple9b <- glmer(appleChoice>1 ~  I(rankChoice.minus1>1)+I(appleChoice.minus1>1) + scoreDelta.minus1 + oppRank + trial + win.minus1 + (1|ID),  family = 'binomial', data = snake_ds, na.action = na.omit)
+summary(mapple9b)
+
 
 # best model mapple9; plot interaction
 plot(effect("rankChoice.minus1:appleChoice.minus1",mapple9), grid=TRUE)
@@ -587,10 +621,30 @@ anova(mapple7.7, mapple9.7)
 #mapple 9.7 marginally better
 plot(effect("appleChoice.minus1:win.minus1",mapple9.7), grid=TRUE)
 
-mapple10.7 <- lmer(appleChoice ~ ipip*panas_pos2*appleChoice.minus1 + ipip*panas_pos2*rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + appleChoice.minus1*win.minus1*trial + (1|ID),  data = snake_tot, na.action = na.omit)
+mapple10.7 <- lmer(appleChoice ~ appleChoice.minus1 + rankChoice.minus1 + ipip*oppRank + scoreDelta.minus1 + appleChoice.minus1*win.minus1*trial + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mapple10.7)
 car::Anova(mapple10.7)
 
+snake_tot$oppRanks <- scale(snake_tot$oppRank)
+snake_tot$trials <- scale(snake_tot$trial)
+
+mapple10.7 <- lmer(appleChoice ~ appleChoice.minus1 + rankChoice.minus1 + ipip*oppRank +  scoreDelta.minus1 + trial + (trial|ID),  data = snake_tot, na.action = na.omit)
+summary(mapple10.7)
+car::Anova(mapple10.7)
+
+plot(effect("ipip:oppRank",mapple10.7, grid=TRUE, x.var = "oppRank"))
+
+
+
+mapple10.7b <- glmer(appleChoice>1 ~ I(appleChoice.minus1>1) + I(rankChoice.minus1>1) + group1_5 + oppRanks*ipip +  scoreDelta.minus1 + trials + (1|ID),  family = 'binomial',data = snake_tot, na.action = na.omit)
+summary(mapple10.7b)
+car::Anova(mapple10.7b)
+
+plot(effect("oppRanks:ipip",mapple10.7b), grid=TRUE)
+
+
+lsm <- lsmeans(mapple10.7b, "oppRanks", by = "ipip", at = list(oppRanks = c(1,200), ipip = c(15,35)))
+plot(lsm, horiz = F)
 anova(mapple9.7, mapple10.7)
 #best model apple 10.7
 #to print output in .txt file
@@ -706,18 +760,65 @@ car::Anova(mrank8)
 anova(mrank7, mrank8)
 # mrank7 = better model
 
-mrank9 <- lmer(rankChoice ~ rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
+mrank9 <- lmer(rankChoice ~ rankStart*trial + win + score*close + oppRank + rankChoice.minus1 + appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrank9)
-car::Anova(mrank9)
+car::Anova(mrank9, type = 'III')
 
-anova(mrank7, mrank9)
+snake_tot$rankStarts <- scale(snake_tot$rankStart)
+snake_tot$scores <- scale(snake_tot$score)
+snake_tot$trials <- scale(snake_tot$trial)
+snake_tot$oppRanks <- scale(snake_tot$oppRank)
+
+save(snake_tot, file="snake_tot.Rda")
+
+
+mrank9b <- glmer(rankChoice>1 ~ rankStarts + trials + win + scores*close + oppRanks + I(rankChoice.minus1>1) + I(appleChoice>1) + (1|ID),  family = binomial(link = "logit"), data = snake_tot, na.action = na.omit)
+summary(mrank9b)
+car::Anova(mrank9b, type = 'III')
+
+mrank9b1 <- glmer(rankChoice>1 ~ rankStarts + score*close +  I(rankChoice.minus1>1) + I(appleChoice>1) + (1|ID),  nAGQ = 0, family = binomial(link = "logit"), data = snake_tot, na.action = na.omit)
+summary(mrank9b1)
+anova(mrank9b1, mrank9b)
+car::Anova(mrank9b1, type = 'III')
+
+
+snake_tot$rankChoice.zero <- snake_tot$rankChoice - 1
+
+library(pscl)
+mrank9c <- hurdle(rankChoice.zero ~ rankStart + trial + win + score*close + oppRank + rankChoice.minus1 + appleChoice + (1:ID),  data = snake_tot, na.action = na.omit, dist = 'negbin', zero.dist = 'negbin', link = 'logit')
+summary(mrank9c)
+
+anova(mrank9c, mrank9d)
+
+
+mrank9d <- hurdle(rankChoice.zero ~ rankStart + trial + win + oppRank + rankChoice.minus1 + appleChoice + (1:ID) |trial + rankChoice.minus1 + rankStart + win + (1:ID),  data = snake_tot, na.action = na.omit, dist = 'negbin', zero.dist = 'geometric', link = 'logit')
+summary(mrank9d)
+
+t <- stargazer(mrank9c, mrank9d, type = "text")
+
+
 # mrank9 + best model
+
+plot(effect("rankStart:trial",mrank9), grid=TRUE)
+plot(effect("scores:close",mrank9b), grid=TRUE)
+
+chars <- snake_tot[,c(20,21,22,23,25,27,28,29)]
+chars$close <- as.numeric(chars$close)
+cormat <- corr.test(chars, method = "spearman")
+names(snake_tot)
+
 
 mrank10 <- lmer(rankChoice ~ rankStart*trial + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_ds, na.action = na.omit)
 summary(mrank10)
 car::Anova(mrank10)
 
 anova(mrank9, mrank10)
+
+# dichotomize boost choice
+snake_tot$boost <- snake_tot$rankChoice>1
+
+mrankBi <- glmer(rankChoice>1 ~ rankStarts + trials + win + scores*close + oppRanks + I(rankChoice.minus1>1) + I(appleChoice>1) + (1|ID),  family = 'binomial', data = snake_tot, na.action = na.omit)
+summary(mrankBi)
 
 
 ##BLOCK2: demographics (age, gender education, snake_level, group1_5)
@@ -909,7 +1010,7 @@ anova(mrank1.6, mrank2.6)
 
 #best model mrank 2.6
 
-## Preliminary final model (BLOCK7 = BLOCKS 1 and 6)
+## BLOCK7 = BLOCKS 1 and 6
 mrank1.7 <- lmer(rankChoice ~ rankEstim2*satisfied + ipip + group1_5 + gameExp + age + rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrank1.7)
 car::Anova(mrank1.7)
@@ -940,3 +1041,11 @@ car::Anova(mrank5.7)
 
 anova(mrank4.7, mrank5.7)
 #mrank4.7 = better model
+
+## BLOCK8 = BLOCKS 1 and 4
+mrank1.8 <- lmer(rankChoice ~ ipip + rankStart*trial + win + score*close + rankStart*rankChoice.minus1*rankChoice.minus2+ rankChoice.minus2*score + rankStart*appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrank1.8)
+car::Anova(mrank1.8)
+anova(mrank4.7, mrank1.8)
+
+# spaghe
