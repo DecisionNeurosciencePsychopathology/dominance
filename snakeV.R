@@ -113,10 +113,9 @@ snake_ds <- snake_ds %>% group_by(ID) %>% mutate(score.minus1 = lag(score, n=1, 
                                      close.minus1 = lag(close, n=1, order_by=trial),
                                      close.minus2 = lag(close, n=2, order_by=trial))
                                 
-snake_ds$appleChoiceDelta <- snake_ds$appleChoice.minus1 - snake_ds$appleChoice
-snake_ds$rankChoiceDelta <- snake_ds$rankChoice.minus1 - snake_ds$rankChoice
+snake_ds$appleChoiceDelta <- snake_ds$appleChoice - snake_ds$appleChoice.minus1
+snake_ds$rankChoiceDelta <- snake_ds$rankChoice - snake_ds$rankChoice.minus1
 snake_ds$scoreDelta <- snake_ds$score - snake_ds$score.minus1
-snake_ds$scoreDelta.minus1 <- snake_ds$score.minus1 - snake_ds$score.minus2
 
 snake_ds <- snake_ds %>% group_by(ID) %>% mutate(appleChoiceDelta.minus1 = lag(appleChoiceDelta, n=1, order_by=trial),
                                        appleChoiceDelta.minus2 = lag(appleChoiceDelta, n=2, order_by=trial),
@@ -228,6 +227,17 @@ hist(snake_tot$rankChoice,
 barchart(snake_tot$appleChoice_binary)
 barchart(snake_tot$rankChoice_binary)
 
+hist(snake_tot$appleChoiceDelta,
+     main = "Delta Apple stealing",
+     xlab = "diff. apple choice - previous apple choice",
+     ylab = "trials")
+
+hist(snake_tot$rankChoiceDelta,
+     main = "Delta Booster buying",
+     xlab = "diff. booster choice - previous booster choice",
+     ylab = "trials")
+
+
 
 hist(snake_suppl$ffni_total, xlab = "scores", main = "FFNI TOTAL", density = 25)
 hist(snake_suppl$ffni_GRANDIOSE_NARCISSISM, xlab = "scores", main = "GRANDIOSE N.", density = 25)
@@ -242,6 +252,7 @@ hist(snake_tot$pgsi_total, xlab = "sample)", main = "PGSI", density = 25)
 hist(snake_tot$dass21_stress, xlab = "sample)", main = "DASS21-stress", density = 25)
 hist(snake_tot$dass21_anxiety, xlab = "sample)", main = "DASS21-anxiety", density = 25)
 hist(snake_tot$dass21_depression, xlab = "sample)", main = "DASS21-depression", density = 25)
+
 
 
 library(tableone)

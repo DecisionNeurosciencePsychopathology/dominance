@@ -15,6 +15,22 @@ library("lsmeans")
 library(effects)
 library(arm)
 
+## function checking for colinearity:
+#  for collinearity diagnostics
+vif.lme <- function (fit) {
+  ## adapted from rms::vif
+  v <- vcov(fit)
+  nam <- names(fixef(fit))
+  ## exclude intercepts
+  ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
+  if (ns > 0) {
+    v <- v[-(1:ns), -(1:ns), drop = FALSE]
+    nam <- nam[-(1:ns)] }
+  d <- diag(v)^0.5
+  v <- diag(solve(v/(d %o% d)))
+  names(v) <- nam
+  v }
+
 ######################################
 ## glossary to snake game variables ##
 ######################################
@@ -144,8 +160,89 @@ anova(mrank3vii, mrank3viii)
 plot(effect("rankChoice_binary.minus1:win", mrank3vii), grid=TRUE)
 plot(effect("rankChoice_binary.minus1:scale(trial):scale(rankStart)", mrank3vii), grid=TRUE)
 
+# models with dependant variable being rankChoiceDelta.
 
-# narcissistic scales in best-fitting model
+mrankA0 <- lmer(rankChoiceDelta ~ scale(trial) + win + close + scale(score) + scale(rankStart) + scale(oppRank) + scale(scoreDiff) + appleChoice + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA0)
+car::Anova(mrankA0, type = 'III')
+
+mrankA4 <- lmer(rankChoiceDelta ~ scale(trial) + win + scale(rankStart) + scale(scoreDelta) + close + appleChoiceDelta + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA4)
+car::Anova(mrankA4, type = 'III')
+
+mrankA5 <- lmer(rankChoiceDelta ~  win + scale(rankStart)*scale(trial) + scale(scoreDelta) + close + appleChoiceDelta + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA5)
+car::Anova(mrankA5, type = 'III')
+
+anova(mrankA4, mrankA5)
+
+plot(effect("scale(rankStart):scale(trial)",mrankA5), grid=TRUE)
+
+vif.lme(mrankA5)
+
+
+# best model (3-way interaction only marginal, but improves the model significantly)
+mrankA6 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6)
+car::Anova(mrankA6, type = 'III')
+
+anova(mrankA5, mrankA6)
+
+plot(effect("appleChoiceDelta:scale(trial):scale(rankStart)",mrankA6), grid=TRUE)
+
+vif.lme(mrankA6)
+
+
+## narcissistic scales in best-fitting model
+# BPNI
+
+mrankA6_bpni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + scale(bpni_TOTAL) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_bpni)
+car::Anova(mrankA6_bpni, type = 'III')
+
+mrankA6_bpni1 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close*scale(bpni_TOTAL) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_bpni1)
+car::Anova(mrankA6_bpni1, type = 'III')
+
+mrankA6_bpni2 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_TOTAL) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_bpni2)
+car::Anova(mrankA6_bpni2, type = 'III')
+
+vif.lme(mrankA6_bpni2)
+
+anova(mrankA6_bpni1, mrankA6_bpni2)
+
+mrankA6_bpni3 <- lmer(rankChoiceDelta ~  win*appleChoiceDelta*scale(bpni_TOTAL) + scale(scoreDelta) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_bpni3)
+car::Anova(mrankA6_bpni3, type = 'III')
+
+anova(mrankA6_bpni2, mrankA6_bpni3)
+
+#best model: mrankA6_bpni2 or 4, depending on whether we want to keep Apple Choice in there...
+mrankA6_bpni4 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_TOTAL) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_bpni4)
+car::Anova(mrankA6_bpni4, type = 'III')
+
+anova(mrankA6_bpni2, mrankA6_bpni4)
+
+# FFNI
+
+mrankA6_ffni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_ffni)
+car::Anova(mrankA6_ffni, type = 'III')
+
+mrankA6_ffni1 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + appleChoiceDelta*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_ffni1)
+car::Anova(mrankA6_ffni1, type = 'III')
+
+mrankA6_ffni2 <- lmer(rankChoiceDelta ~   scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + win*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA6_ffni2)
+car::Anova(mrankA6_ffni2, type = 'III')
+
+anova(mrankA6_ffni1, mrankA6_ffni2)
+
+
+#OLD MODELS
 #bpni: nothing much
 mrank3v_bpni <- glmer(rankChoice_binary ~ rankChoice_binary.minus1*scale(trial)*scale(rankStart) + rankChoice_binary.minus1*win + scale(rankStart) + appleChoice_binary + scale(bpni_TOTAL) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mrank3v_bpni)

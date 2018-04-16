@@ -16,6 +16,22 @@ library(effects)
 library(arm)
 library(lme4)
 
+## function checking for colinearity:
+#  for collinearity diagnostics
+vif.lme <- function (fit) {
+  ## adapted from rms::vif
+  v <- vcov(fit)
+  nam <- names(fixef(fit))
+  ## exclude intercepts
+  ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
+  if (ns > 0) {
+    v <- v[-(1:ns), -(1:ns), drop = FALSE]
+    nam <- nam[-(1:ns)] }
+  d <- diag(v)^0.5
+  v <- diag(solve(v/(d %o% d)))
+  names(v) <- nam
+  v }
+
 ######################################
 ## glossary to snake game variables ##
 ######################################
@@ -137,6 +153,10 @@ anova(mapple4i, mapple4vi)
 plot(effect("close.minus1:appleChoice_binary.minus1:win.minus1",mapple4vi), grid=TRUE)
 plot(effect("close.minus1:scale(oppRank):appleChoice_binary.minus1",mapple4vi), grid=TRUE)
 
+
+vif.lme(mapple4vi)
+
+
 mapple4vii <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vii)
 car::Anova(mapple4vii)
@@ -163,25 +183,32 @@ car::Anova(mapple4ix)
 anova(mapple4vii, mapple4ix)
 #best models: mapple4vi (lowest AIC) OR mapple4ix (simplest)
 
-#demographics (age, gender education, snake_level)
-mapple_dem <- glmer(appleChoice_binary ~ snakeLevel + gameExp + age + gender + ethnicity + household_income + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
-summary(mapple_dem)
-car::Anova(mapple_dem)
+## improving model by predcting appleChoice_delta and getting rid of previous choices
+mappleA1 <- lmer(appleChoiceDelta ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank) + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1)
+car::Anova(mappleA1, type = 'III')
 
-mapple4vi_dem <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(snakeLevel) + ethnicity + household_income + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
-summary(mapple4vi_dem)
-car::Anova(mapple4vi_dem)
+mappleA2 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA2)
+car::Anova(mappleA2, type = 'III')
 
-anova(mapple_dem, mapple4vi_dem)
+anova(mappleA1, mappleA2)
 
-#psychopathology
-mapple_psych <- glmer(appleChoice_binary ~ scale(dass21_stress) + scale(dass21_anxiety) + scale(dass21_depression) + scale(pgsi_total) + alcohol_use + drug_use + psych_treatment + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
-summary(mapple_psych)
-car::Anova(mapple_psych)
+# best model with design variables only
+mappleA3 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3)
+car::Anova(mappleA3, type = 'III')
 
-mapple4vi_psych <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(snakeLevel) + ethnicity + household_income + scale(age) + gender + dass21_stress + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
-summary(mapple4vi_psych)
-car::Anova(mapple4vi_psych)
+anova(mappleA2, mappleA3)
+vif.lme(mappleA3)
+
+plot(effect("scale(trial):scale(scoreDelta.minus1)",mappleA3), grid=TRUE)
+plot(effect("scale(trial):close.minus1",mappleA3), grid=TRUE)
+
+mappleA4 <- lmer(appleChoiceDelta ~ win.minus1 + scale(oppRank) + scale(trial)*close.minus1*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA4)
+car::Anova(mappleA4, type = 'III')
+
 
 ##narcissistic scales
 #bpni
@@ -196,6 +223,9 @@ summary(mapple4vi_bpni1)
 car::Anova(mapple4vi_bpni1)
 
 plot(effect("win.minus1:bpni_TOTAL",mapple4vi_bpni1), grid=TRUE)
+
+vif.lme(mapple4vi_bpni1)
+
 
 mapple4vi_bpni2 <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + bpni_TOTAL*win.minus1 + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vi_bpni2)
@@ -220,11 +250,17 @@ car::Anova(mapple4vi_bpni1G)
 plot(effect("win.minus1:scale(bpni_GANDIOSITY)",mapple4vi_bpni1G), grid=TRUE)
 
 
+vif.lme(mapple4vi_bpni1G)
+
+
 mapple4vi_bpni1V <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + bpni_VULNERABILITY*win.minus1 + gameExp + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vi_bpni1V)
 car::Anova(mapple4vi_bpni1V)
 
 plot(effect("win.minus1:bpni_VULNERABILITY",mapple4vi_bpni1V), grid=TRUE)
+
+
+vif.lme(mapple4vi_bpni1V)
 
 
 # ffni
@@ -238,6 +274,9 @@ summary(mapple4vi_ffni1)
 car::Anova(mapple4vi_ffni1)
 
 plot(effect("win.minus1:scale(ffni_total)",mapple4vi_ffni1), grid=TRUE)
+
+vif.lme(mapple4vi_ffni1)
+
 
 mapple4vi_ffni2 <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_total)*win.minus1 + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vi_ffni2)
@@ -263,11 +302,16 @@ car::Anova(mapple4vi_ffni1G)
 plot(effect("win.minus1:scale(ffni_GRANDIOSE_NARCISSISM)",mapple4vi_ffni1G), grid=TRUE)
 
 
+vif.lme(mapple4vi_ffni1G)
+
+
 mapple4vi_ffni1E <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_AGENTIC_EXTRAVERSION)*win.minus1 + gameExp + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vi_ffni1E)
 car::Anova(mapple4vi_ffni1E)
 
 plot(effect("win.minus1:scale(ffni_AGENTIC_EXTRAVERSION)",mapple4vi_ffni1E), grid=TRUE)
+
+vif.lme(mapple4vi_ffni1E)
 
 
 mapple4vi_ffni1V <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_VULNERABLE_NARCISSISM)*win.minus1 + gameExp + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
@@ -276,6 +320,9 @@ car::Anova(mapple4vi_ffni1V)
 
 plot(effect("win.minus1:scale(ffni_VULNERABLE_NARCISSISM)",mapple4vi_ffni1V), grid=TRUE)
 plot(effect("win.minus1:scale(ffni_ANTAGONISM)",mapple4vi_ffni1A), grid=TRUE)
+
+
+vif.lme(mapple4vi_ffni1V)
 
 
 mapple4vi_ffniV2 <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_VULNERABLE_NARCISSISM)*scale(oppRank) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
@@ -293,6 +340,10 @@ car::Anova(mapple4vi_ffniV3.2)
 mapple4vi_ffni1A <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_ANTAGONISM)*win.minus1 + gameExp + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mapple4vi_ffni1A)
 car::Anova(mapple4vi_ffni1A)
+
+
+vif.lme(mapple4vi_ffni1A)
+
 
 mapple4vi_ffniA1 <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(ffni_ANTAGONISM)*win.minus1*scale(oppRank) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 s <- getME(mapple4vi_ffniA1,c("theta","fixef"))
@@ -317,10 +368,103 @@ car::Anova(mapple4vi_pgsi2)
 
 anova(mapple4vi_pgsi, mapple4vi_pgsi2)
 
-plot(effect("win.minus1:scale(pgsi_total)",mapple4vi_pgsi2), grid=TRUE)
 
-mapple4vi_pgsi3 <- glmer(appleChoice_binary ~ scale(trial)*close.minus1  + scale(oppRank)*close.minus1*appleChoice_binary.minus1 + close.minus1*appleChoice_binary.minus1*win.minus1 + scale(rankEnd.minus1) + rankChoice_binary.minus1 + scale(pgsi_total)*win.minus1*scale(scoreDelta.minus1) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
-summary(mapple4vi_pgsi3)
-car::Anova(mapple4vi_pgsi3)
+#best model with delta instead of absolute choices
 
-anova(mapple4vi_pgsi2, mapple4vi_pgsi3)
+##BPNI
+mappleA3_bpni <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + scale(bpni_TOTAL) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni)
+car::Anova(mappleA3_bpni, type = 'III')
+
+mappleA3_bpni1 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1*scale(bpni_TOTAL) + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni1)
+car::Anova(mappleA3_bpni1, type = 'III')
+
+mappleA3_bpni2 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1*scale(bpni_TOTAL) + scale(oppRank) + scale(trial) + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni2)
+car::Anova(mappleA3_bpni2, type = 'III')
+
+anova(mappleA3_bpni1, mappleA3_bpni2)
+
+mappleA3_bpni3 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_TOTAL) + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni3)
+car::Anova(mappleA3_bpni3, type = 'III')
+
+anova(mappleA3_bpni1, mappleA3_bpni3)
+
+mappleA3_bpni4 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_TOTAL)*win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni4)
+car::Anova(mappleA3_bpni4, type = 'III')
+
+anova(mappleA3_bpni3, mappleA3_bpni4)
+
+mappleA3_bpni5 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_TOTAL) + scale(bpni_TOTAL)*win.minus1 + scale(oppRank) + scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni5)
+car::Anova(mappleA3_bpni5, type = 'III')
+
+anova(mappleA3_bpni3, mappleA3_bpni5)
+anova(mappleA3_bpni4, mappleA3_bpni5)
+
+# best model with BPNI total score
+mappleA3_bpni6 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_TOTAL)*scale(scoreDelta.minus1) + scale(bpni_TOTAL)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni6)
+car::Anova(mappleA3_bpni6, type = 'III')
+
+anova(mappleA3_bpni5, mappleA3_bpni6)
+vif.lme(mappleA3_bpni6)
+
+plot(effect("scale(bpni_TOTAL):win.minus1",mappleA3_bpni6), grid=TRUE)
+plot(effect("close.minus1:scale(bpni_TOTAL):scale(scoreDelta.minus1)",mappleA3_bpni6), grid=TRUE)
+
+
+mappleA3_bpni7 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_TOTAL)*scale(scoreDelta.minus1)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni7)
+car::Anova(mappleA3_bpni7, type = 'III')
+
+anova(mappleA3_bpni6, mappleA3_bpni7)
+
+mappleA3_bpni8 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + scale(scoreDelta.minus1) + close.minus1*scale(bpni_TOTAL) + scale(bpni_TOTAL)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpni8)
+car::Anova(mappleA3_bpni8, type = 'III')
+
+anova(mappleA3_bpni6, mappleA3_bpni8)
+
+#BPNI subscales
+mappleA3_bpniG <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + scale(bpni_GANDIOSITY) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpniG)
+car::Anova(mappleA3_bpniG, type = 'III')
+
+mappleA3_bpniG6 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_GANDIOSITY)*scale(scoreDelta.minus1) + scale(bpni_GANDIOSITY)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpniG6)
+car::Anova(mappleA3_bpniG6, type = 'III')
+
+mappleA3_bpniG7 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_GANDIOSITY) + scale(scoreDelta.minus1) + scale(bpni_GANDIOSITY)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpniG7)
+car::Anova(mappleA3_bpniG7, type = 'III')
+
+anova(mappleA3_bpniG6, mappleA3_bpniG7)
+
+mappleA3_bpniV <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + scale(bpni_VULNERABILITY) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpniV)
+car::Anova(mappleA3_bpniV, type = 'III')
+
+mappleA3_bpniV6 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(bpni_GANDIOSITY)*scale(scoreDelta.minus1) + scale(bpni_VULNERABILITY)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_bpniV6)
+car::Anova(mappleA3_bpniV6, type = 'III')
+
+
+#FFNI
+mappleA3_ffni <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_ffni)
+car::Anova(mappleA3_ffni, type = 'III')
+
+mappleA3_ffni6 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + close.minus1*scale(ffni_total)*scale(scoreDelta.minus1) + scale(ffni_total)*win.minus1 + scale(oppRank) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_ffni6)
+car::Anova(mappleA3_ffni6, type = 'III')
+
+mappleA3_ffni1 <- lmer(appleChoiceDelta ~ scale(trial)*close.minus1 + win.minus1 + scale(oppRank)*scale(ffni_total)*scale(trial) + scale(trial)*scale(scoreDelta.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA3_ffni1)
+car::Anova(mappleA3_ffni1, type = 'III')
+
+anova(mappleA3_ffni, mappleA3_ffni1)
+
