@@ -181,7 +181,6 @@ plot(effect("scale(rankStart):scale(trial)",mrankA5), grid=TRUE)
 vif.lme(mrankA5)
 
 
-# best model (3-way interaction only marginal, but improves the model significantly)
 mrankA6 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrankA6)
 car::Anova(mrankA6, type = 'III')
@@ -192,54 +191,170 @@ plot(effect("appleChoiceDelta:scale(trial):scale(rankStart)",mrankA6), grid=TRUE
 
 vif.lme(mrankA6)
 
+# best model (without apple choice Delta)
+mrankA7 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7)
+car::Anova(mrankA7, type = 'III')
+
+vif.lme(mrankA7)
+
+plot(effect("scale(trial):scale(rankStart)",mrankA7), grid=TRUE)
+
 
 ## narcissistic scales in best-fitting model
 # BPNI
+mrankA7_bpni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + bpni_TOTAL + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni)
+car::Anova(mrankA7_bpni, type = 'III')
 
-mrankA6_bpni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + scale(bpni_TOTAL) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_bpni)
-car::Anova(mrankA6_bpni, type = 'III')
+mrankA7_bpni1 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close*scale(bpni_TOTAL) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni1)
+car::Anova(mrankA7_bpni1, type = 'III')
 
-mrankA6_bpni1 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close*scale(bpni_TOTAL) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_bpni1)
-car::Anova(mrankA6_bpni1, type = 'III')
+plot(effect("close:scale(bpni_TOTAL)",mrankA7_bpni1), grid=TRUE)
 
-mrankA6_bpni2 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_TOTAL) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_bpni2)
-car::Anova(mrankA6_bpni2, type = 'III')
+#best model (most consistent with subscales, even though only marginally better than previous one)
+mrankA7_bpni2 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_TOTAL) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni2)
+car::Anova(mrankA7_bpni2, type = 'III')
 
-vif.lme(mrankA6_bpni2)
+vif.lme(mrankA7_bpni2)
 
-anova(mrankA6_bpni1, mrankA6_bpni2)
+plot(effect("scale(scoreDelta):close:scale(bpni_TOTAL)",mrankA7_bpni2), grid=TRUE)
 
-mrankA6_bpni3 <- lmer(rankChoiceDelta ~  win*appleChoiceDelta*scale(bpni_TOTAL) + scale(scoreDelta) + appleChoiceDelta*scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_bpni3)
-car::Anova(mrankA6_bpni3, type = 'III')
+
+anova(mrankA7_bpni1, mrankA7_bpni2)
+
+mrankA7_bpni3 <- lmer(rankChoiceDelta ~  win*scale(bpni_TOTAL) + scale(bpni_TOTAL)*close + scale(scoreDelta) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni3)
+car::Anova(mrankA7_bpni3, type = 'III')
 
 anova(mrankA6_bpni2, mrankA6_bpni3)
 
-#best model: mrankA6_bpni2 or 4, depending on whether we want to keep Apple Choice in there...
-mrankA6_bpni4 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_TOTAL) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_bpni4)
-car::Anova(mrankA6_bpni4, type = 'III')
+#BPNI subscales
 
-anova(mrankA6_bpni2, mrankA6_bpni4)
+mrankA7_bpni1G <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close*scale(bpni_GANDIOSITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni1G)
+car::Anova(mrankA7_bpni1G, type = 'III')
+
+#best model
+mrankA7_bpni2G <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_GANDIOSITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni2G)
+car::Anova(mrankA7_bpni2G, type = 'III')
+
+anova(mrankA7_bpni1G, mrankA7_bpni2G)
+
+mrankA7_bpni2Gi <- lmer(rankChoiceDelta ~  scale(scoreDelta) + close*scale(bpni_GANDIOSITY) + win*scale(bpni_GANDIOSITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni2Gi)
+car::Anova(mrankA7_bpni2Gi, type = 'III')
+
+plot(effect("scale(scoreDelta):close:scale(bpni_GANDIOSITY)",mrankA7_bpni2G), grid=TRUE)
+
+
+mrankA7_bpni1V <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close*scale(bpni_VULNERABILITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni1V)
+car::Anova(mrankA7_bpni1V, type = 'III')
+
+#best model
+mrankA7_bpni2V <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*close*scale(bpni_VULNERABILITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni2V)
+car::Anova(mrankA7_bpni2V, type = 'III')
+
+anova(mrankA7_bpni1V, mrankA7_bpni2V)
+plot(effect("scale(scoreDelta):close:scale(bpni_VULNERABILITY)",mrankA7_bpni2V), grid=TRUE)
+
+mrankA7_bpni2Vi <- lmer(rankChoiceDelta ~  win*scale(bpni_VULNERABILITY) + scale(scoreDelta)*close*scale(bpni_VULNERABILITY) + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_bpni2Vi)
+car::Anova(mrankA7_bpni2Vi, type = 'III')
+
 
 # FFNI
 
-mrankA6_ffni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_ffni)
-car::Anova(mrankA6_ffni, type = 'III')
+mrankA7_ffni <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni)
+car::Anova(mrankA7_ffni, type = 'III')
 
-mrankA6_ffni1 <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + appleChoiceDelta*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_ffni1)
-car::Anova(mrankA6_ffni1, type = 'III')
+#best model
+mrankA7_ffni1 <- lmer(rankChoiceDelta ~  win*scale(ffni_total) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1)
+car::Anova(mrankA7_ffni1, type = 'III')
 
-mrankA6_ffni2 <- lmer(rankChoiceDelta ~   scale(scoreDelta) + close + appleChoiceDelta*scale(trial)*scale(rankStart) + win*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
-summary(mrankA6_ffni2)
-car::Anova(mrankA6_ffni2, type = 'III')
+anova(mrankA7_ffni, mrankA7_ffni1)
+vif.lme(mrankA7_ffni1)
+plot(effect("win:scale(ffni_total)",mrankA7_ffni1), grid=TRUE)
 
-anova(mrankA6_ffni1, mrankA6_ffni2)
+mrankA7_ffni2 <- lmer(rankChoiceDelta ~  scale(scoreDelta) + close + win*scale(ffni_total)*scale(trial) + scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni2)
+car::Anova(mrankA7_ffni2, type = 'III')
+
+anova(mrankA7_ffni1, mrankA7_ffni2)
+
+# FFNI subscales
+mrankA7_ffniG <- lmer(rankChoiceDelta ~  win + scale(ffni_GRANDIOSE_NARCISSISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffniG)
+car::Anova(mrankA7_ffniG, type = 'III')
+
+#best FFNI Grandiose model
+mrankA7_ffni1G <- lmer(rankChoiceDelta ~  win*scale(ffni_GRANDIOSE_NARCISSISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1G)
+car::Anova(mrankA7_ffni1G, type = 'III')
+
+anova(mrankA7_ffniG, mrankA7_ffni1G)
+vif.lme(mrankA7_ffni1G)
+plot(effect("win:scale(ffni_GRANDIOSE_NARCISSISM)",mrankA7_ffni1G), grid=TRUE)
+
+
+
+mrankA7_ffniV <- lmer(rankChoiceDelta ~  win + scale(ffni_VULNERABLE_NARCISSISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffniV)
+car::Anova(mrankA7_ffniV, type = 'III')
+
+#VULERABLE subscale: no interaction with win, no main effect
+mrankA7_ffni1V <- lmer(rankChoiceDelta ~  win*scale(ffni_VULNERABLE_NARCISSISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1V)
+car::Anova(mrankA7_ffni1V, type = 'III')
+
+anova(mrankA7_ffniV, mrankA7_ffni1V)
+vif.lme(mrankA7_ffni1V)
+plot(effect("win:scale(ffni_VULNERABLE_NARCISSISM)",mrankA7_ffni1V), grid=TRUE)
+
+mrankA7_ffni1Vi <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*scale(ffni_VULNERABLE_NARCISSISM) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1Vi)
+car::Anova(mrankA7_ffni1Vi, type = 'III')
+
+#AGENTIC EXTRAVERSION subscale: no interaction with win, no main effect
+mrankA7_ffniE <- lmer(rankChoiceDelta ~  win + scale(ffni_AGENTIC_EXTRAVERSION) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffniE)
+car::Anova(mrankA7_ffniE, type = 'III')
+
+mrankA7_ffni1E <- lmer(rankChoiceDelta ~  win*scale(ffni_AGENTIC_EXTRAVERSION) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1E)
+car::Anova(mrankA7_ffni1E, type = 'III')
+
+anova(mrankA7_ffniE, mrankA7_ffni1E)
+vif.lme(mrankA7_ffni1E)
+plot(effect("win:scale(ffni_AGENTIC_EXTRAVERSION)",mrankA7_ffni1E), grid=TRUE)
+
+mrankA7_ffni1Ei <- lmer(rankChoiceDelta ~  win + scale(scoreDelta) + close + scale(trial) + scale(ffni_AGENTIC_EXTRAVERSION)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1Ei)
+car::Anova(mrankA7_ffni1Ei, type = 'III')
+
+#ANTAGONISM subscale: marginal effect similar to GRANDIOSE subscale
+mrankA7_ffniA <- lmer(rankChoiceDelta ~  win + scale(ffni_ANTAGONISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffniA)
+car::Anova(mrankA7_ffniA, type = 'III')
+
+mrankA7_ffni1A <- lmer(rankChoiceDelta ~  win*scale(ffni_ANTAGONISM) + scale(scoreDelta) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1A)
+car::Anova(mrankA7_ffni1A, type = 'III')
+
+anova(mrankA7_ffniA, mrankA7_ffni1A)
+vif.lme(mrankA7_ffni1A)
+plot(effect("win:scale(ffni_ANTAGONISM)",mrankA7_ffni1A), grid=TRUE)
+
+mrankA7_ffni1Ai <- lmer(rankChoiceDelta ~  win + scale(scoreDelta)*scale(ffni_ANTAGONISM) + close + scale(trial)*scale(rankStart) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA7_ffni1Ai)
+car::Anova(mrankA7_ffni1Ai, type = 'III')
 
 
 #OLD MODELS
@@ -298,6 +413,7 @@ summary(mrank3v_bpniV4)
 car::Anova(mrank3v_bpniV4)
 
 anova(mrank3v_bpniV, mrank3v_bpniV4)
+vif.lme(mrank3v_bpniV4)
 
 plot(effect("rankChoice_binary.minus1:scale(bpni_VULNERABILITY)", mrank3v_bpniV4), grid=TRUE)
 
@@ -323,6 +439,8 @@ car::Anova(mrank3v_bpniG3.2)
 mrank3v_bpniG4 <- glmer(rankChoice_binary ~ rankChoice_binary.minus1*scale(trial)*scale(rankStart) + rankChoice_binary.minus1*win + scale(rankStart) + appleChoice_binary*scale(bpni_GANDIOSITY) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mrank3v_bpniG4)
 car::Anova(mrank3v_bpniG4)
+
+vif.lme(mrank3v_bpniG4)
 
 #ffni: interaction with appleChoice of same round (mrank3v_ffni3): for total narcissism, grandiose narcissism, agentic extraversion, marginal for antagonism but not there for vulnerable (which is interacting with rankStart)
 mrank3v_ffni <- glmer(rankChoice_binary ~ rankChoice_binary.minus1*scale(trial)*scale(rankStart) + rankChoice_binary.minus1*win + scale(rankStart) + appleChoice_binary + scale(ffni_total) + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
@@ -424,6 +542,8 @@ mrank3v_ffni3A4 <- glmer(rankChoice_binary ~ rankChoice_binary.minus1*scale(tria
 summary(mrank3v_ffni3A4)
 car::Anova(mrank3v_ffni3A4)
 
+vif.lme(mrank3v_ffni3A4)
+
 
 mrank3v_ffni3E0 <- glmer(rankChoice_binary ~ rankChoice_binary.minus1*scale(trial)*scale(rankStart) + rankChoice_binary.minus1*win + scale(rankStart) + appleChoice_binary + scale(ffni_AGENTIC_EXTRAVERSION) + appleChoice_binary + scale(snakeLevel) + scale(age) + gender + (1|ID),  data = snake_tot, family = binomial, control=glmerControl(optimizer = "bobyqa",optCtr=list(maxfun=2e5)), na.action = na.omit)
 summary(mrank3v_ffni3E0)
@@ -481,4 +601,55 @@ summary(mrank1.8)
 car::Anova(mrank1.8)
 anova(mrank4.7, mrank1.8)
 
-# spaghe
+# within- and between-subject models ###########################################
+
+###between-subject
+
+## between-subject effects
+mrankB1_mean_ffni0 <- lm(rankChoice_mean_logit ~ scale(ffni_total),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni0)
+car::Anova(mrankB1_mean_ffni0, type = 'III')
+
+mrankB1_mean_ffni <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + scale(ffni_total),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni)
+car::Anova(mrankB1_mean_ffni, type = 'III')
+
+mrankB1_mean_ffni <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + scale(ffni_total) + scale(dass21_stress) + scale(pgsi_total),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni)
+car::Anova(mrankB1_mean_ffni, type = 'III')
+
+mrankB1_mean_bpni0 <- lm(rankChoice_mean_logit ~ scale(bpni_TOTAL),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_bpni0)
+car::Anova(mrankB1_mean_bpni0, type = 'III')
+
+mrankB1_mean_bpni <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + scale(bpni_TOTAL),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_bpni)
+car::Anova(mrankB1_mean_bpni, type = 'III')
+
+mrankB1_mean_bpni <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + scale(bpni_TOTAL) + scale(dass21_stress) + scale(pgsi_total),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_bpni)
+car::Anova(mrankB1_mean_bpni, type = 'III')
+
+mrankB1_mean_ffni_V <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + scale(ffni_VULNERABLE_NARCISSISM),  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni_V)
+car::Anova(mrankB1_mean_ffni_V, type = 'III')
+
+mrankB1_mean_ffni_G <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + ffni_GRANDIOSE_NARCISSISM,  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni_G)
+car::Anova(mrankB1_mean_ffni_G, type = 'III')
+
+mrankB1_mean_ffni_A <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + ffni_ANTAGONISM,  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni_A)
+car::Anova(mrankB1_mean_ffni_A, type = 'III')
+
+mrankB1_mean_ffni_E <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + ffni_AGENTIC_EXTRAVERSION,  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_ffni_E)
+car::Anova(mrankB1_mean_ffni_E, type = 'III')
+
+mrankB1_mean_bpni_G <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + bpni_GANDIOSITY,  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_bpni_G)
+car::Anova(mrankB1_mean_bpni_G, type = 'III')
+
+mrankB1_mean_bpni_V <- lm(rankChoice_mean_logit ~ scale(age) + gender + ethnicity + household_income + bpni_VULNERABILITY,  data = snake_suppl_mean, na.action = na.omit)
+summary(mrankB1_mean_bpni_V)
+car::Anova(mrankB1_mean_bpni_V, type = 'III')
