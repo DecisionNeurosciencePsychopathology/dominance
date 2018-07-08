@@ -51,17 +51,22 @@ library(arm)
 setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Pittsburgh_may2018")
 
 # wd for Alex
-#setwd("~/code//dominance")
+setwd("~/code//dominance")
 
 # clear environment
 rm(list=ls())
 
 
 ## load datafile and skip to line 126 (use only if data has already been prepared previously, otherwise run lines 64 to 126) 
-#load("snake_totP.Rda")
-#load("snake_totP_shrunk.Rda")
+load("snake_totP.Rda")
+load("snake_totP_shrunk.Rda")
+snake_totP_HC <- snake_totP[snake_totP$group1_5 == '1',]
+snake_totP_shrunk_HC <- snake_totP_shrunk[snake_totP_shrunk$group1_5 == '1',]
+snake_totP_AT <- snake_totP[snake_totP$group1_5 == '5',]
+snake_totP_shrunk_AT <- snake_totP_shrunk[snake_totP_shrunk$group1_5 == '5',]
 
-## create .Rda file by combining the participants' output files. Skip this part until line 101 if the dataset has already been created)
+
+## create .Rda file by combining the participants' output files. Skip this part until line 317 if the dataset has already been created)
 #the following command reads a table with the participants'ids, which are also their output files' names (the files are named [id].csv); this file should be in the working directory
 participants <- read_excel("snake_data_Pittsburgh.xlsx")
 
@@ -277,6 +282,14 @@ snake_totP <- snake_totP %>% group_by(ID) %>% mutate(rankChoice_wi_0.minus1 = la
                                                    appleChoice_wi_0.minus2 = lag(appleChoice_wi_0, n=2, order_by = trial))
 
 
+snake_suppl <- read_excel('snake_data_Pittsburgh-compl2.xlsx')
+snake_suppl$ID <- as.factor(snake_suppl$ID)
+snake_totP <- left_join(snake_totP, snake_suppl, by = 'ID')
+
+snake_totP$household_income_log <- snake_totP$household_income
+snake_totP$household_income_log[snake_totP$household_income == 0] <- 1
+snake_totP$household_income_log <- log(snake_totP$household_income_log)
+
 #saving processed dataset
 save(snake_totP, file="snake_totP.Rda")
 
@@ -291,18 +304,36 @@ snake_totP_shrunk <- as.data.table(snake_totP_shrunk)
 snake_totP_shrunk <-dcast.data.table(snake_totP_shrunk, ... ~ trial, value.var = c("appleChoice_wi_0", "rankChoice_wi_0"))
 View(snake_totP_shrunk)
 
-save(snake_totP_shrunk, file="snake_totP_shrunk.Rda")
+snake_suppl <- read_excel('snake_data_Pittsburgh-compl2.xlsx')
+snake_suppl$ID <- as.factor(snake_suppl$ID)
+snake_totP_shrunk <- left_join(snake_totP_shrunk, snake_suppl, by = 'ID')
+
+snake_totP_shrunk$household_income_log <- snake_totP_shrunk$household_income
+snake_totP_shrunk$household_income_log[snake_totP_shrunk$household_income == 0] <- 1
+snake_totP_shrunk$household_income_log <- log(snake_totP_shrunk$household_income_log)
+
+snake_totP_shrunk$HRSD_no_suic[snake_totP_shrunk$group1_5 == '1'] <- NA 
+
+save(snake_totP_shrunk, file="snake_totP_shruT3nk.Rda")
 
 # missingness
 library(mice)
 md.pattern(snake_totP)
 
 library(VIM)
-snake_totP_aggr = aggr(snake_totP_shrunk, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(snake_ds), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
-snake_suppl$bpni_TOTAL[snake_totP$ID=='64']
+snake_totP_aggr = aggr(snake_totP_shrunk, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(snake_totP_shrunk), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"))
+
+#snake_suppl$bpni_TOTAL[snake_totP$ID=='64']
+
+# participants 215088, 221423, 221637, 37542 do not have the ipip and the ffni scales; 202200 and 221261 do not have the BPNI.
+snake_totP_shrunk$ID[is.na(snake_totP_shrunk$ffni_total)]
+snake_totP_shrunk$ID[is.na(snake_totP_shrunk$ipip_total)]
+
+snake_totP_shrunk$ID[is.na(snake_totP_shrunk$bpni_TOTAL)]
+
 
 # distribution.
-par(mfrow=c(2,3))
+par(mfrow=c(3,2))
 summary(snake_totP$gender)
 hist(snake_totP$age)
 hist(snake_totP$gameExp)
@@ -356,33 +387,99 @@ hist(snake_totP$rankChoice_wi_0,
      xlab = "mean rankChoice",
      ylab = "trials")
 
+par(mfrow=c(3,3))
+hist(snake_totP_shrunk$ffni_total, xlab = "scores", main = "FFNI TOTAL", density = 25)
+hist(snake_totP_shrunk$ffni_GRANDIOSE_NARCISSISM, xlab = "scores", main = "GRANDIOSE N.", density = 25)
+hist(snake_totP_shrunk$ffni_VULNERABLE_NARCISSISM, xlab = "scores", main = "VULNERABLE N.", density = 25)
+hist(snake_totP_shrunk$ffni_AGENTIC_EXTRAVERSION, xlab = "scores", main = "AGENTIC E.", density = 25)
+hist(snake_totP_shrunk$ffni_NARCISSISTIC_NEUROTICISM, xlab = "scores", main = "N. NEUROTICISM", density = 25)
+hist(snake_totP_shrunk$ffni_ANTAGONISM, xlab = "scores", main = "ANTAGONISM", density = 25)
+hist(snake_totP_shrunk$bpni_TOTAL, xlab = "scores", main = "BPNI TOTAL", density = 20)
+hist(snake_totP_shrunk$bpni_GANDIOSITY, xlab = "scores", main = "GRANDIOSITY", density = 20)
+hist(snake_totP_shrunk$bpni_VULNERABILITY, xlab = "scores", main = "VULNERABILITY", density = 20)
+hist(snake_totP$ipip_total, xlab = "scores", main = "IPIP TOTAL", density = 25)
 
-hist(snake_suppl$ffni_total, xlab = "scores", main = "FFNI TOTAL", density = 25)
-hist(snake_suppl$ffni_GRANDIOSE_NARCISSISM, xlab = "scores", main = "GRANDIOSE N.", density = 25)
-hist(snake_suppl$ffni_VULNERABLE_NARCISSISM, xlab = "scores", main = "VULNERABLE N.", density = 25)
-hist(snake_suppl$ffni_AGENTIC_EXTRAVERSION, xlab = "scores", main = "AGENTIC E.", density = 25)
-hist(snake_suppl$ffni_NARCISSISTIC_NEUROTICISM, xlab = "scores", main = "N. NEUROTICISM", density = 25)
-hist(snake_suppl$ffni_ANTAGONISM, xlab = "scores", main = "ANTAGONISM", density = 25)
-hist(snake_suppl$bpni_TOTAL, xlab = "scores", main = "BPNI TOTAL", density = 20)
-hist(snake_suppl$bpni_GANDIOSITY, xlab = "scores", main = "GRANDIOSITY", density = 20)
-hist(snake_suppl$bpni_VULNERABILITY, xlab = "scores", main = "VULNERABILITY", density = 20)
-hist(snake_totP$ipip_total, xlab = "sample)", main = "IPIP TOTAL", density = 25)
+
+#distribution of HC only
+# distribution.
+par(mfrow=c(2,2))
+summary(snake_totP_HC$gender)
+hist(snake_totP_HC$age)
+hist(snake_totP_HC$gameExp)
+hist(snake_totP_HC$appleChoice,
+     main = "Apple stealing",
+     xlab = "apple choice",
+     ylab = "trials")
+
+hist(snake_totP_HC$rankChoice,
+     main = "Paying for rank",
+     xlab = "rank choice",
+     ylab = "trials")
+
+hist(snake_totP_HC$appleChoiceDelta,
+     main = "Delta Apple stealing",
+     xlab = "apple choice - previous apple choice",
+     ylab = "trials")
+
+hist(snake_totP_HC$rankChoiceDelta,
+     main = "Delta Booster buying",
+     xlab = "rank choice - previous rank choice",
+     ylab = "trials")
+
+hist(snake_totP_shrunk_HC$appleChoice_b,
+     main = "Between-subject mean",
+     xlab = "mean appleChoice",
+     ylab = "trials")
+
+hist(snake_totP_shrunk_HC$rankChoice_b,
+     main = "Between-subject mean",
+     xlab = "mean rankChoice",
+     ylab = "trials")
+
+hist(snake_totP_shrunk_HC$appleChoice_b_logit,
+     main = "Between-subject mean (logit)",
+     xlab = "mean appleChoice",
+     ylab = "trials")
+
+hist(snake_totP_shrunk_HC$rankChoice_b_logit,
+     main = "Between-subject mean (logit)",
+     xlab = "mean rankChoice",
+     ylab = "trials")
+
+hist(snake_totP_HC$appleChoice_wi_0,
+     main = "Within-subject mean",
+     xlab = "mean appleChoice",
+     ylab = "trials")
+
+hist(snake_totP_HC$rankChoice_wi_0,
+     main = "Within-subject mean",
+     xlab = "mean rankChoice",
+     ylab = "trials")
 
 
-library(tableone)
+par(mfrow=c(3,3))
+hist(snake_totP_shrunk_HC$ffni_total, xlab = "scores", main = "FFNI TOTAL", density = 25)
+hist(snake_totP_shrunk_HC$ffni_GRANDIOSE_NARCISSISM, xlab = "scores", main = "GRANDIOSE N.", density = 25)
+hist(snake_totP_shrunk_HC$ffni_VULNERABLE_NARCISSISM, xlab = "scores", main = "VULNERABLE N.", density = 25)
+hist(snake_totP_shrunk_HC$ffni_AGENTIC_EXTRAVERSION, xlab = "scores", main = "AGENTIC E.", density = 25)
+hist(snake_totP_shrunk_HC$ffni_NARCISSISTIC_NEUROTICISM, xlab = "scores", main = "N. NEUROTICISM", density = 25)
+hist(snake_totP_shrunk_HC$ffni_ANTAGONISM, xlab = "scores", main = "ANTAGONISM", density = 25)
+hist(snake_totP_shrunk_HC$bpni_TOTAL, xlab = "scores", main = "BPNI TOTAL", density = 20)
+hist(snake_totP_shrunk_HC$bpni_GANDIOSITY, xlab = "scores", main = "GRANDIOSITY", density = 20)
+hist(snake_totP_shrunk_HC$bpni_VULNERABILITY, xlab = "scores", main = "VULNERABILITY", density = 20)
+hist(snake_totP_shrunk_HC$ipip_total, xlab = "scores", main = "IPIP TOTAL", density = 25)
+
+papple <- ggplot(snake_totP,aes(trial,appleChoice)) + geom_line() + facet_wrap(~ID)
+papple_HC <- ggplot(snake_totP_HC,aes(trial,appleChoice)) + geom_line() + facet_wrap(~ID)
+papple_AT <- ggplot(snake_totP_AT,aes(trial,appleChoice)) + geom_line() + facet_wrap(~ID)
+
+prank <- ggplot(snake_totP,aes(trial,rankChoice)) + geom_line() + facet_wrap(~ID)
+prank_HC <- ggplot(snake_totP_HC,aes(trial,rankChoice)) + geom_line() + facet_wrap(~ID)
+prank_AT <- ggplot(snake_totP_AT,aes(trial,rankChoice)) + geom_line() + facet_wrap(~ID)
+
 #Create a variable list which we want in Table 1
-listVars <- c("age","gender.y","ethnicity","education","group1_5","group1_7","ipip_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM")
-
-#Define categorical variables
-catVars <- c("gender.y", "ethnicity", "group1_5", "group1_7")
-
-#Total Population
-table1 <- CreateTableOne(vars = listVars, data = snake_totP_shrunk, factorVars = catVars)
-table1
-
-
 library(compareGroups)
-chars <- snake_totP_shrunk[,c("age","gender.y","race","education","group1_5","group1_7","ipip_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM")]
+chars <- snake_totP_shrunk[,c("age_snake","gender.y","race","education","household_income_log","ipip_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM", "HRSD_no_suic", "exit_total", "drs_total")]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,snake_totP_shrunk$group1_5, show.descr = TRUE)
 tc <- createTable(c, hide.no = 0, digits = 1, show.p.mul = TRUE)
@@ -394,29 +491,39 @@ par(mfrow=c(1,1))
 library(corrplot)
 library(data.table)
 cor(snake_totP_shrunk$appleChoice_b, snake_totP_shrunk$rankChoice_b, method = 'spearman')
+cor(snake_totP_shrunk$appleChoice_b[snake_totP_shrunk$group1_5 == '1'], snake_totP_shrunk$rankChoice_b[snake_totP_shrunk$group1_5 == '1'], method = 'spearman')
+cor(snake_totP_shrunk$appleChoice_b[snake_totP_shrunk$group1_5 == '2'], snake_totP_shrunk$rankChoice_b[snake_totP_shrunk$group1_5 == '2'], method = 'spearman')
+cor(snake_totP_shrunk$appleChoice_b[snake_totP_shrunk$group1_5 == '4'], snake_totP_shrunk$rankChoice_b[snake_totP_shrunk$group1_5 == '4'], method = 'spearman')
+cor(snake_totP_shrunk$appleChoice_b[snake_totP_shrunk$group1_5 == '5'], snake_totP_shrunk$rankChoice_b[snake_totP_shrunk$group1_5 == '5'], method = 'spearman')
+
+cor(snake_totP$appleChoice, snake_totP$rankChoice, method = 'spearman')
+cor(snake_totP$appleChoice[snake_totP$group1_5 == '1'], snake_totP$rankChoice[snake_totP$group1_5 == '1'], method = 'spearman')
+cor(snake_totP$appleChoice[snake_totP$group1_5 == '2'], snake_totP$rankChoice[snake_totP$group1_5 == '2'], method = 'spearman')
+cor(snake_totP$appleChoice[snake_totP$group1_5 == '4'], snake_totP$rankChoice[snake_totP$group1_5 == '4'], method = 'spearman')
+cor(snake_totP$appleChoice[snake_totP$group1_5 == '5'], snake_totP$rankChoice[snake_totP$group1_5 == '5'], method = 'spearman')
 
 #cormat <- corr.test(chars, method = "spearman")
 names(snake_totP)
-chars <- snake_totP[,c(170,173,171,172,156,157,158,193:195)]
+chars <- snake_totP[,c('trial','scoreDiff','oppRank','rankEnd.minus1','rankGain_initial')]
 #setnames(chars,1:8,c("FFNI total", "FFNI grand", "FFNI vuln", "FFNI antag", "FFNI ag.ex.", "BPNI total", "BPNI grand", "BPNI vuln"))
 
 corrplot(cor(chars, method = "spearman", use = "na.or.complete"))
 corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
 #design variables
-chars2 <- snake_totP[,c(20,23,27,77,81)]
+chars2 <- snake_totP[,c('score','scoreDelta','appleChoice','rankChoice','rankEnd.minus1' ,'bpni_TOTAL', 'ffni_total', 'ipip_total')]
 #setnames(chars,1:8,c("trial", "FFNI grand", "FFNI vuln", "FFNI antag", "FFNI ag.ex.", "BPNI total", "BPNI grand", "BPNI vuln"))
 corrplot(cor(chars2, method = "spearman", use = "na.or.complete"), method = "number")
 corrplot.mixed(cor(chars2, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
 # correlation matrix for subject-dependent variables
-chars3 <- snake_totP[,c(21,70,30,31,77,170,173,156)]
+chars3 <- snake_totP_shrunk[,c('ipip_total','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','ffni_ANTAGONISM','ffni_AGENTIC_EXTRAVERSION','ffni_NARCISSISTIC_NEUROTICISM','bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY')]
 corrplot.mixed(cor(chars3, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
 #other measures of psychopathology
-#chars4 <- snake_totP[,c(104,105,106,103,116,102)]
-#corrplot.mixed(cor(chars4, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
+chars4 <- snake_totP_shrunk[,c('HRSD_no_suic','ffni_total','bpni_TOTAL','ipip_total')]
+corrplot.mixed(cor(chars4, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
-chars5 <- snake_totP[,c(203:205,170,173,156)]
+chars5 <- snake_totP[,c('delta_panas_angry','delta_panas_scared','delta_panas_pos','ipip_total', 'bpni_TOTAL', 'ffni_total')]
 corrplot.mixed(cor(chars5, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 

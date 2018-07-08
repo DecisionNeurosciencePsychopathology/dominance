@@ -375,6 +375,10 @@ hist(snake_tot$rankChoice_wi_0)
 hist(snake_tot_shrunk$appleChoice_b_logit)
 hist(snake_tot_shrunk$rankChoice_b_logit)
 
+
+papple <- ggplot(snake_tot,aes(trial,appleChoice)) + geom_line() + facet_wrap(~ID)
+prank <- ggplot(snake_tot,aes(trial,rankChoice)) + geom_line() + facet_wrap(~ID)
+
 library(tableone)
 #Create a variable list which we want in Table 1
 listVars <- c("age","gender","ethnicity","english_first_language","household_income","psych_treatment","dass21_stress","dass21_anxiety","dass21_depression","alcohol_use","drug_use","pgsi_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION")

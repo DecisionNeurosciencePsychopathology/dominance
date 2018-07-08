@@ -16,6 +16,9 @@ library(effects)
 library(arm)
 library(lme4)
 
+# clear environment
+rm(list=ls())
+
 ## function checking for colinearity:
 #  for collinearity diagnostics
 vif.lme <- function (fit) {
@@ -68,16 +71,18 @@ setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Pittsburgh_may2018")
 # wd for Alex
 #setwd("~/code//dominance")
 
-# clear environment
-rm(list=ls())
 
 
 ## load datafile and skip to line 126 (use only if data has already been prepared previously, otherwise run lines 64 to 126) 
-
 load("snake_totP.Rda")
 load("snake_totP_shrunk.Rda")
+snake_totP_HC <- snake_totP[snake_totP$group1_5 == '1',]
+snake_totP_shrunk_HC <- snake_totP_shrunk[snake_totP_shrunk$group1_5 == '1',]
+snake_totP_AT <- snake_totP[snake_totP$group1_5 == '5',]
+snake_totP_shrunk_AT <- snake_totP_shrunk[snake_totP_shrunk$group1_5 == '5',]
 
-
+# releveling group1_5 to avoid high vif scores.
+snake_totP$group1_5 <- relevel(snake_totP$group1_5, ref = '5')
 
 
 # within- and between-subject models ###########################################
@@ -87,10 +92,6 @@ load("snake_totP_shrunk.Rda")
 mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_bpni)
 car::Anova(mrankB0_bpni,type = 'III')
-
-mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni)
-car::Anova(mrankB0_ffni,type = 'III')
 
 mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_bpni_V)
@@ -124,394 +125,340 @@ mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total), data = snake_totP_shr
 summary(mrankB0_ipip)
 car::Anova(mrankB0_ipip,type = 'III')
 
-# demographics only
-mrankB0 <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0)
-car::Anova(mrankB0,type = 'III')
-
-mrankB1 <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(education) + race + gender.y + scale(age)*scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB1)
-car::Anova(mrankB1,type = 'III')
-
-plot(effect("scale(age):scale(gameExp)",mrankB1), grid=TRUE)
-anova(mrankB0, mrankB1)
-
 # narcissistic scales + demographics
-# bpni: nothing much
-mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL) + scale(delta_panas_angry) + scale(age)*scale(gameExp) + scale(education) + race + gender.y, data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL) + scale(delta_panas_angry) + scale(age) + scale(gameExp) + scale(education) + race + gender.y + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_bpni)
 car::Anova(mrankB0_bpni,type = 'III')
 
-#ffni total*education interaction // agentic extraversion and ipip for appleChoice
-mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(ffni_total)*scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total) + scale(delta_panas_angry) + scale(age) + scale(gameExp) + scale(education) + race + gender.y + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_ffni)
 car::Anova(mrankB0_ffni,type = 'III')
 
-plot(effect("scale(ffni_total):scale(education)",mrankB0_ffni), grid=TRUE)
-
-mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_bpni_V)
 car::Anova(mrankB0_bpni_V,type = 'III')
 
-mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_ffni_V)
 car::Anova(mrankB0_ffni_V,type = 'III')
 
-#ffni antagonism*gender interaction // agentic extraversion in appleChoice
-mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education) + race + scale(ffni_ANTAGONISM)*gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_A)
-car::Anova(mrankB0_ffni_A,type = 'III')
-
-plot(effect("scale(ffni_ANTAGONISM):gender.y",mrankB0_ffni_A), grid=TRUE)
-
-mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni_G)
-car::Anova(mrankB0_bpni_G,type = 'III')
-
-mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education) + race + scale(ffni_GRANDIOSE_NARCISSISM)*gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_G)
-car::Anova(mrankB0_ffni_G,type = 'III')
-
-# agentic extraversion // for appleChoice + weird thing with race
-mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education) + scale(ffni_AGENTIC_EXTRAVERSION)*race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_E)
-car::Anova(mrankB0_ffni_E,type = 'III')
-
-mrankB0_ffni_E2 <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education) + race + scale(ffni_AGENTIC_EXTRAVERSION)*gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_E2)
-car::Anova(mrankB0_ffni_E2,type = 'III')
-
-anova(mrankB0_ffni_E, mrankB0_ffni_E2)
-
-mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(ffni_NARCISSISTIC_NEUROTICISM)+ scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_ffni_N)
 car::Anova(mrankB0_ffni_N,type = 'III')
 
-mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(ipip_total) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(ffni_ANTAGONISM) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_ffni_A)
+car::Anova(mrankB0_ffni_A,type = 'III')
+
+mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_bpni_G)
+car::Anova(mrankB0_bpni_G,type = 'III')
+
+mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(ffni_GRANDIOSE_NARCISSISM) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_ffni_G)
+car::Anova(mrankB0_ffni_G,type = 'III')
+
+mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_ffni_E)
+car::Anova(mrankB0_ffni_E,type = 'III')
+
+mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
 summary(mrankB0_ipip)
 car::Anova(mrankB0_ipip,type = 'III')
 
-# ipip: interaction with education // appleChoice
-mrankB0_ipip1 <- lm(rankChoice_b_logit ~ scale(delta_panas_angry) + scale(age) + scale(education)*scale(ipip_total) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ipip1)
-car::Anova(mrankB0_ipip1,type = 'III')
+# models with group
+mrankB0_group <- lm(rankChoice_b_logit ~ group1_5 + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_group)
+car::Anova(mrankB0_group,type = 'III')
 
-anova(mrankB0_ipip, mrankB0_ipip1)
+mrankB0_group1 <- lm(rankChoice_b_logit ~ group1_5*scale(ipip_total) + scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_group1)
+car::Anova(mrankB0_group1,type = 'III')
 
-# narcissistic scales +  panas scared
-mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_group2 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_total) + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_group2)
+car::Anova(mrankB0_group2, type = 'III')
+
+mrankB0_group3 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_total) + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+summary(mrankB0_group3)
+car::Anova(mrankB0_group3, type = 'III')
+
+
+## HC only
+#panas angry*narcissism interaction
+mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total)*scale(delta_panas_angry) + scale(age) + scale(gameExp) + scale(education) + race + gender.y + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_ffni)
 car::Anova(mrankB0_ffni,type = 'III')
 
-mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+plot(effect("scale(ffni_total):scale(delta_panas_angry)",mrankB0_ffni), grid=TRUE)
+
+mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
+summary(mrankB0_ffni_G)
+car::Anova(mrankB0_ffni_G,type = 'III')
+
+plot(effect("scale(ffni_GRANDIOSE_NARCISSISM):scale(delta_panas_angry)",mrankB0_ffni_G), grid=TRUE)
+
+mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
+summary(mrankB0_ffni_E)
+car::Anova(mrankB0_ffni_E,type = 'III')
+
+plot(effect("scale(ffni_AGENTIC_EXTRAVERSION):scale(delta_panas_angry)",mrankB0_ffni_E), grid=TRUE)
+
+mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
+summary(mrankB0_ipip)
+car::Anova(mrankB0_ipip,type = 'III')
+
+plot(effect("scale(ipip_total):scale(delta_panas_angry)",mrankB0_ipip), grid=TRUE)
+
+#marginal similar interaction for BPNI VULNERABILITY, FFNI ANTAGONISM
+mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL)*scale(delta_panas_angry) + scale(age) + scale(gameExp) + scale(education) + race + gender.y + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_bpni)
 car::Anova(mrankB0_bpni,type = 'III')
 
-mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_bpni_V)
 car::Anova(mrankB0_bpni_V,type = 'III')
 
-mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_V)
-car::Anova(mrankB0_ffni_V,type = 'III')
-
-mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(ffni_ANTAGONISM)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(ffni_ANTAGONISM)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_ffni_A)
 car::Anova(mrankB0_ffni_A,type = 'III')
 
-mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni_G)
-car::Anova(mrankB0_bpni_G,type = 'III')
-
-mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_G)
-car::Anova(mrankB0_ffni_G,type = 'III')
-
-mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_E)
-car::Anova(mrankB0_ffni_E,type = 'III')
-
-mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_N)
-car::Anova(mrankB0_ffni_N,type = 'III')
-
-plot(effect("scale(ffni_NARCISSISTIC_NEUROTICISM):scale(delta_panas_scared)",mrankB0_ffni_N), grid=TRUE)
-
-mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total)*scale(delta_panas_scared) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ipip)
-car::Anova(mrankB0_ipip,type = 'III')
-
-# narcissistic scales + panans pos
-mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni)
-car::Anova(mrankB0_ffni,type = 'III')
-
-mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni)
-car::Anova(mrankB0_bpni,type = 'III')
-
-mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni_V)
-car::Anova(mrankB0_bpni_V,type = 'III')
-
-mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_ffni_V)
 car::Anova(mrankB0_ffni_V,type = 'III')
 
-mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(ffni_ANTAGONISM)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_A)
-car::Anova(mrankB0_ffni_A,type = 'III')
-
-mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni_G)
-car::Anova(mrankB0_bpni_G,type = 'III')
-
-mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_G)
-car::Anova(mrankB0_ffni_G,type = 'III')
-
-mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_E)
-car::Anova(mrankB0_ffni_E,type = 'III')
-
-mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_ffni_N)
 car::Anova(mrankB0_ffni_N,type = 'III')
 
-plot(effect("scale(ffni_NARCISSISTIC_NEUROTICISM):scale(delta_panas_pos)",mrankB0_ffni_N), grid=TRUE)
-
-mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total)*scale(delta_panas_pos) + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ipip)
-car::Anova(mrankB0_ipip,type = 'III')
-
-# narcissistic scales + panans angry_b
-mrankB0_bpni <- lm(rankChoice_b_logit ~ scale(bpni_TOTAL)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni)
-car::Anova(mrankB0_bpni,type = 'III')
-
-mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni)
-car::Anova(mrankB0_ffni,type = 'III')
-
-mrankB0_bpni_V <- lm(rankChoice_b_logit ~ scale(bpni_VULNERABILITY)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_bpni_V)
-car::Anova(mrankB0_bpni_V,type = 'III')
-
-mrankB0_ffni_V <- lm(rankChoice_b_logit ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_V)
-car::Anova(mrankB0_ffni_V,type = 'III')
-
-mrankB0_ffni_A <- lm(rankChoice_b_logit ~ scale(ffni_ANTAGONISM)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_A)
-car::Anova(mrankB0_ffni_A,type = 'III')
-
-mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
+mrankB0_bpni_G <- lm(rankChoice_b_logit ~ scale(bpni_GANDIOSITY)*scale(delta_panas_angry) + scale(age) + scale(education) + race + gender.y + scale(gameExp) + scale(household_income_log), data = snake_totP_shrunk_HC, na.action = na.omit)
 summary(mrankB0_bpni_G)
 car::Anova(mrankB0_bpni_G,type = 'III')
 
-mrankB0_ffni_G <- lm(rankChoice_b_logit ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_G)
-car::Anova(mrankB0_ffni_G,type = 'III')
 
-mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_E)
-car::Anova(mrankB0_ffni_E,type = 'III')
-
-mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ffni_N)
-car::Anova(mrankB0_ffni_N,type = 'III')
-
-plot(effect("scale(ffni_NARCISSISTIC_NEUROTICISM):scale(delta_panas_angry_b)",mrankB0_ffni_N), grid=TRUE)
-
-#positive mean effect!
-mrankB0_ipip <- lm(rankChoice_b_logit ~ scale(ipip_total)*scale(delta_panas_angry_b) + group1_5 + scale(age) + scale(education) + race + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_ipip)
-car::Anova(mrankB0_ipip,type = 'III')
 
 ###########################################################################################
 ##################### within-subject means ################################################
 ###########################################################################################
 
-# design variables only
-mrankA <- lmer(rankChoice_wi_0 ~ scale(trial) + win + close + scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
+# design variables only: no interactions that survives controlling for previous choices.
+mrankA <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA)
+car::Anova(mrankA, type = 'III')
+vif.lme(mrankA)
+
+## with narcissistic scales, without group
+
+# bpni total
+mrankA_bpni0 <- lmer(rankChoice_wi_0 ~ scale(bpni_TOTAL) + scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) +  win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_bpni0)
+car:: Anova(mrankA_bpni0, type = 'III')
+
+mrankA_bpni1 <- lmer(rankChoice_wi_0 ~ scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta)*scale(bpni_TOTAL)*win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_bpni1)
+car:: Anova(mrankA_bpni1, type = 'III')
+
+anova(mrankA_bpni0, mrankA_bpni1)
+vif.lme(mrankA_bpni1)
+plot(effect("scale(scoreDelta):scale(bpni_TOTAL):win",mrankA_bpni1), grid=TRUE)
+plot(effect("scale(scoreDelta):scale(bpni_TOTAL)",mrankA_bpni1), grid=TRUE)
+
+#ffni
+mrankA_ffni0 <- lmer(rankChoice_wi_0 ~ scale(ffni_total) + scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) +  win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni0)
+car::Anova(mrankA_ffni0, type = 'III')
+
+mrankA_ffni1 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) +  win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni1)
+car::Anova(mrankA_ffni1, type = 'III')
+
+mrankA_ffni2 <- lmer(rankChoice_wi_0 ~ scale(trial) + scale(rankStart) + scale(oppRank) + scale(ffni_total)*scale(scoreDelta)*win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni2)
+car::Anova(mrankA_ffni2, type = 'III')
+
+#best model for ffni
+mrankA_ffni3 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(ffni_total)*scale(scoreDelta)*win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni3)
+car::Anova(mrankA_ffni3, type = 'III')
+
+anova(mrankA2_ffni0,mrankA2_ffni1)
+anova(mrankA2_ffni1,mrankA2_ffni2)
+anova(mrankA2_ffni1,mrankA2_ffni3)
+anova(mrankA2_ffni2,mrankA2_ffni3)
+vif.lme(mrankA2_ffni3)
+
+plot(effect("scale(ffni_total):scale(scoreDelta):win",mrankA_ffni3), grid=TRUE, x.var = 'scoreDelta')
+plot(effect("scale(ffni_total):scale(trial)",mrankA_ffni3), grid=TRUE, x.var = 'trial')
+
+
+#ipip
+mrankA2_ipip <- lmer(rankChoice_wi_0 ~ scale(ipip_total) + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ipip)
+car::Anova(mrankA2_ipip, type = 'III')
+
+# best model for ipip
+mrankA2_ipip1 <- lmer(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ipip1)
+car::Anova(mrankA2_ipip1, type = 'III')
+
+anova(mrankA2_ipip, mrankA2_ipip1)
+plot(effect("scale(ipip_total):scale(trial)",mrankA2_ipip1), grid=TRUE, x.var = 'trial')
+vif.lme(mrankA2_ipip1)
+
+mrankA2_ipip2 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(oppRank) + scale(ipip_total)*scale(rankStart)*scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ipip2)
+car::Anova(mrankA2_ipip2, type = 'III')
+
+# group and design variables (no narcissistic scales)
+mrankA_group <- lmer(rankChoice_wi_0 ~ group1_5 + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_group)
+car::Anova(mrankA_group, type = 'III')
+vif.lme(mrankA_group)
+
+# best model with design and group
+mrankA_group1 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + group1_5*scale(oppRank)*scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_group1)
+car::Anova(mrankA_group1, type = 'III')
+vif.lme(mrankA_group1)
+
+anova(mrankA_group, mrankA_group1)
+
+plot(effect("group1_5:scale(oppRank):scale(scoreDelta)",mrankA_group1), grid=TRUE)
+plot(effect("scale(oppRank):group1_5",mrankA0_group1), grid=TRUE)
+
+#sensitivity for best model with group
+mrankA_group1s <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + group1_5*scale(oppRank)*scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + age + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_group1s)
+car::Anova(mrankA_group1s, type = 'III')
+
+
+mrankA0_group2 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*group1_5 + win + scale(rankStart) + scale(score)*scale(oppRank)*group1_5 + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA0_group2)
+car::Anova(mrankA0_group2, type = 'III')
+
+plot(effect("scale(trial):scale(bpni_TOTAL):group1_5",mrankA0_group2), grid=TRUE)
+plot(effect("group1_5:scale(score):scale(oppRank)",mrankA0_group2), grid=TRUE)
+
+vif.lme(mrankA0_group2)
+
+mrankA0_group3 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*group1_5 + win + scale(rankStart) + scale(oppRank) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA0_group3)
+car::Anova(mrankA0_group3, type = 'III')
+
+vif.lme(mrankA0_group3)
+plot(effect("group1_5:scale(oppRank)",mrankA0_group3), grid=TRUE)
+
+anova(mrankA0_group2, mrankA0_group3)
+
+
+# testing interactions with group and narcissistic scales (probably not useful)
+mrankA_group1_bpni <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + group1_5*scale(oppRank)*scale(bpni_TOTAL) + scale(scoreDelta)*scale(bpni_TOTAL) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_group1_bpni)
+car::Anova(mrankA_group1_bpni, type = 'III')
+
+mrankA2_bpni0_group1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(bpni_TOTAL)*group1_5 + scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_bpni0_group1)
+car:: Anova(mrankA2_bpni0_group1, type = 'III')
+
+vif.lme(mrankA2_bpni0_group1)
+plot(effect("scale(trial):scale(bpni_TOTAL):group1_5",mrankA2_bpni0_group1), grid=TRUE)
+
+mrankA2_bpni0_group2 <- lmer(rankChoice_wi_0 ~ win + scale(trial) + scale(rankStart) + scale(oppRank) + scale(score)*scale(bpni_TOTAL)*group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_bpni0_group2)
+car:: Anova(mrankA2_bpni0_group2, type = 'III')
+
+mrankA2_bpni0_group3 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(bpni_TOTAL)*group1_5 + scale(rankStart) + scale(oppRank) + scale(score)*scale(bpni_TOTAL)*group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_bpni0_group3)
+car:: Anova(mrankA2_bpni0_group3, type = 'III')
+
+anova(mrankA2_bpni0_group2, mrankA2_bpni0_group1)
+
+#marginal 3-way interaction with group
+mrankA2_ffni1_group <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_total)*group1_5 + scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ffni1_group)
+car::Anova(mrankA2_ffni1_group, type = 'III')
+
+plot(effect("scale(trial):scale(ffni_total):group1_5",mrankA2_ffni1_group), grid=TRUE)
+
+##############################################
+########### checking in HC only ##############
+##############################################
+
+snake_totP_HC <- snake_totP[snake_totP$group1_5 == '1',]
+
+
+# Most reliable model.
+mrankA <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP_HC, na.action = na.omit)
 summary(mrankA)
 car::Anova(mrankA, type = 'III')
 
-mrankA0 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA0)
-car::Anova(mrankA0, type = 'III')
-
-mrankA1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA1)
-car::Anova(mrankA1, type = 'III')
-
-anova(mrankA0, mrankA1)
-
-#best model with design variables only
-mrankA0_1 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(score) + rankChoice_wi_0.minus1 + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA0_1)
-car::Anova(mrankA0_1, type = 'III')
-
-mrankA1_1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(rankStart) + scale(oppRank) + scale(score) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA1_1)
-car::Anova(mrankA1_1, type = 'III')
+vif.lme(mrankA)
 
 
-#resume here, also do _b with design variables only.
 ## adding narcissistic scales
-# bpni total: no correlations
-mrankA2_bpni0 <- lmer(rankChoice_wi_0 ~ win + scale(trial) + scale(rankStart) + scale(oppRank) + scale(score) + scale(bpni_TOTAL) + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_bpni0)
-car:: Anova(mrankA2_bpni0, type = 'III')
 
-# best for bpni
-mrankA2_1_bpni0 <- lmer(rankChoice_wi_0 ~ win + scale(trial) + scale(rankStart) + scale(oppRank) + scale(score) + scale(bpni_TOTAL) + scale(rankChoice_wi_0.minus1) + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_bpni0)
-car:: Anova(mrankA2_1_bpni0, type = 'III')
+mrankA1_bpni <- lmer(rankChoice_wi_0 ~ scale(bpni_TOTAL) + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_bpni)
+car::Anova(mrankA1_bpni, type = 'III')
+
+mrankA1_bpni1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(bpni_TOTAL)*scale(rankStart) + scale(oppRank) + scale(scoreDelta) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_bpni1)
+car::Anova(mrankA1_bpni1, type = 'III')
+
+#best model with BPNI
+mrankA1_bpni2 <- lmer(rankChoice_wi_0 ~ scale(trial) + win*scale(bpni_TOTAL)*scale(rankStart) + scale(oppRank) + scale(scoreDelta) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_bpni2)
+car::Anova(mrankA1_bpni2, type = 'III')
+
+anova(mrankA1_bpni, mrankA1_bpni1)
+anova(mrankA1_bpni, mrankA1_bpni2)
+anova(mrankA1_bpni1, mrankA1_bpni2)
+
+vif.lme(mrankA1_bpni2)
+plot(effect("win:scale(bpni_TOTAL):scale(rankStart)",mrankA1_bpni2), grid=TRUE, x.var = 'rankStart')
+plot(effect("win:scale(bpni_TOTAL)",mrankA1_bpni2), grid=TRUE, x.var = 'win')
+plot(effect("scale(bpni_TOTAL):scale(rankStart)",mrankA1_bpni2), grid=TRUE, x.var = 'rankStart')
+plot(effect("win:scale(rankStart)",mrankA1_bpni2), grid=TRUE, x.var = 'rankStart')
+
+
+mrankA1_bpni3 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*scale(rankStart) + win*scale(bpni_TOTAL)*scale(rankStart) + scale(oppRank) + scale(scoreDelta) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_bpni3)
+car::Anova(mrankA1_bpni3, type = 'III')
+
 
 #ffni
-mrankA2_ffni0 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(rankStart) + scale(oppRank) + scale(score) + scale(ffni_total) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_ffni0)
-car::Anova(mrankA2_ffni0, type = 'III')
-
-mrankA2_ffni1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_total) + scale(rankStart) + scale(oppRank) + scale(score) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_ffni1)
-car::Anova(mrankA2_ffni1, type = 'III')
-
-plot(effect("scale(trial):scale(ffni_total)",mrankA2_ffni1), grid=TRUE)
-
-mrankA2_1_ffni3 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_total) + scale(trial)*scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni3)
-car::Anova(mrankA2_1_ffni3, type = 'III')
+mrankA1_ffni <- lmer(rankChoice_wi_0 ~ scale(ffni_total) + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_ffni)
+car::Anova(mrankA1_ffni, type = 'III')
 
 #best model for ffni
-mrankA2_1_ffni1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_total) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1)
-car::Anova(mrankA2_1_ffni1, type = 'III')
+mrankA1_ffni1 <- lmer(rankChoice_wi_0 ~ scale(trial) + scale(ffni_total)*win*scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_ffni1)
+car::Anova(mrankA1_ffni1, type = 'III')
 
-plot(effect("scale(trial):scale(ffni_total)",mrankA2_1_ffni1), grid=TRUE)
-
-#ffni subscales: same interaction (but only marginal) for vulnerable narcissism and antagonism
-#still have to try with group1_5
-mrankA2_1_ffni1_V <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_VULNERABLE_NARCISSISM) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1_V)
-car::Anova(mrankA2_1_ffni1_V, type = 'III')
-
-mrankA2_1_ffni1_G <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1_G)
-car::Anova(mrankA2_1_ffni1_G, type = 'III')
-
-mrankA2_1_ffni1_A <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_ANTAGONISM) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1_A)
-car::Anova(mrankA2_1_ffni1_A, type = 'III')
-
-mrankA2_1_ffni1_E <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_AGENTIC_EXTRAVERSION) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1_E)
-car::Anova(mrankA2_1_ffni1_E, type = 'III')
-
-mrankA2_1_ffni1_N <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ffni1_N)
-car::Anova(mrankA2_1_ffni1_N, type = 'III')
-
-#bpni subscales: no similar effect to ffni.
-mrankA2_1_bpni1_V <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(bpni_VULNERABILITY) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_bpni1_V)
-car::Anova(mrankA2_1_bpni1_V, type = 'III')
-
-mrankA2_1_bpni1_G <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(bpni_GANDIOSITY) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_bpni1_G)
-car::Anova(mrankA2_1_bpni1_G, type = 'III')
+anova(mrankA1_ffni, mrankA1_ffni1)
+vif.lme(mrankA1_ffni1)
+plot(effect("scale(ffni_total):win:scale(rankStart)",mrankA1_ffni1), grid=TRUE, x.var = 'rankStart')
+plot(effect("scale(ffni_total):win:scale(rankStart)",mrankA1_ffni1), grid=TRUE, x.var = 'rankStart')
+plot(effect("scale(ffni_total):win:scale(rankStart)",mrankA1_ffni1), grid=TRUE, x.var = 'rankStart')
 
 #ipip
-mrankA2_1_ipip0 <- lmer(rankChoice_wi_0 ~ scale(ipip_total) + win + scale(trial) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ipip0)
-car::Anova(mrankA2_1_ipip0, type = 'III')
+mrankA1_ipip <- lmer(rankChoice_wi_0 ~ scale(ipip_total) + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_ipip)
+car::Anova(mrankA1_ipip, type = 'III')
 
-#best model for ipip
-mrankA2_1_ipip1 <- lmer(rankChoice_wi_0 ~ win + scale(trial)*scale(ipip_total) + scale(rankStart) + scale(oppRank) + scale(score) + scale(rankChoice_wi_0.minus1) + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA2_1_ipip1)
-car::Anova(mrankA2_1_ipip1, type = 'III')
+mrankA1_ipip1 <- lmer(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + win + scale(ipip_total) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP_HC, na.action = na.omit)
+summary(mrankA1_ipip1)
+car::Anova(mrankA1_ipip1, type = 'III')
 
-plot(effect("scale(trial):scale(ipip_total)",mrankA2_1_ipip1), grid=TRUE)
+vif.lme(mrankA1_ipip)
 
-###############################################################################################################
-################################################ group differences ############################################
-###############################################################################################################
+anova(mrankA1_ipip, mrankA1_ipip1)
+anova(mrankA1_ipip1, mrankA1_ipip2)
+anova(mrankA1_ipip1, mrankA1_ipip3)
+anova(mrankA1_ipip2, mrankA1_ipip3)
 
-############################################# between-subject #################################################
-# as single predictor
-mrankB0_gp <- lm(rankChoice_b_logit ~ group1_5, data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp)
-car::Anova(mrankB0_gp,type = 'III')
+plot(effect("scale(trial):scale(ipip_total)",mrankA1_ipip3), grid=TRUE)
+plot(effect("scale(ipip_total):scale(score)",mrankA1_ipip3), grid=TRUE)
 
-# with demographics: nothing much
-mrankB0_gp0 <- lm(rankChoice_b_logit ~ group1_5 + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp0)
-car::Anova(mrankB0_gp0,type = 'III')
-
-#with narcissistic scales
-mrankB0_gp1 <- lm(rankChoice_b_logit ~ group1_5*scale(bpni_TOTAL) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp1)
-car::Anova(mrankB0_gp1,type = 'III')
-
-mrankB0_gp2 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_total) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp2)
-car::Anova(mrankB0_gp2,type = 'III')
-
-#margninal for ipip
-mrankB0_gp3 <- lm(rankChoice_b_logit ~ group1_5*scale(ipip_total) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp3)
-car::Anova(mrankB0_gp3,type = 'III')
-
-plot(effect("group1_5:scale(ipip_total)",mrankB0_gp3), grid=TRUE)
-
-mrankB0_gp4 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_GRANDIOSE_NARCISSISM) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp4)
-car::Anova(mrankB0_gp4,type = 'III')
-
-mrankB0_gp5 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_VULNERABLE_NARCISSISM) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp5)
-car::Anova(mrankB0_gp5,type = 'III')
-
-mrankB0_gp6 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_ANTAGONISM) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp6)
-car::Anova(mrankB0_gp6,type = 'III')
-
-mrankB0_gp7 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_AGENTIC_EXTRAVERSION) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp7)
-car::Anova(mrankB0_gp7,type = 'III')
-
-mrankB0_gp8 <- lm(rankChoice_b_logit ~ group1_5*scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp8)
-car::Anova(mrankB0_gp8,type = 'III')
-
-mrankB0_gp9 <- lm(rankChoice_b_logit ~ group1_5*scale(bpni_GANDIOSITY) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp9)
-car::Anova(mrankB0_gp9,type = 'III')
-
-mrankB0_gp10 <- lm(rankChoice_b_logit ~ group1_5*scale(bpni_VULNERABILITY) + scale(delta_panas_angry)+ scale(age) + scale(education) + race  + gender.y + scale(gameExp), data = snake_totP_shrunk, na.action = na.omit)
-summary(mrankB0_gp10)
-car::Anova(mrankB0_gp10,type = 'III')
-
-#within-subject: fo not focus on this one, possible that suicidal groups do not ingage in the task.
-mrankA0_1_gp0 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(score) + rankChoice_wi_0.minus1 + group1_5 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA0_1_gp0)
-car::Anova(mrankA0_1_gp0, type = 'III')
-
-mrankA0_1_gp1 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank)*group1_5 + scale(score) + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA0_1_gp1)
-car::Anova(mrankA0_1_gp1, type = 'III')
-
-mrankA0_1_gp2 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(score)*scale(oppRank)*group1_5 + rankChoice_wi_0.minus1 + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mrankA0_1_gp2)
-car::Anova(mrankA0_1_gp2, type = 'III')
-
-vif.lme(mrankA0_1_gp2)
-anova(mrankA0_1_gp1, mrankA0_1_gp2)
-
-plot(effect("scale(score):scale(oppRank):group1_5",mrankA0_1_gp2), grid=TRUE)
-
-mscoreA0_1_gp2 <- lmer(score ~ group1_5*scale(trial) + scale(age)*scale(trial) + scale(education)*scale(trial) + (1|ID),  data = snake_totP, na.action = na.omit)
-summary(mscoreA0_1_gp2)
-car::Anova(mscoreA0_1_gp2, type = 'III')
 
