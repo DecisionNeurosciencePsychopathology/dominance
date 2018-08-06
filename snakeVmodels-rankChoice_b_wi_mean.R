@@ -155,6 +155,11 @@ mrankB0_ffni_E <- lm(rankChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*scale
 summary(mrankB0_ffni_E)
 car::Anova(mrankB0_ffni_E,type = 'III')
 
+mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_angry) + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp), data = snake_tot_shrunk, na.action = na.omit)
+summary(mrankB0_ffni_N)
+car::Anova(mrankB0_ffni_N,type = 'III')
+
+
 # narcissistic scales +  ratings
 mrankB0_ffni <- lm(rankChoice_b_logit ~ scale(ffni_total)*scale(delta_panas_angry), data = snake_tot_shrunk, na.action = na.omit)
 summary(mrankB0_ffni)
@@ -190,6 +195,9 @@ car::Anova(mrankB0_ffni_E,type = 'III')
 
 plot(effect("scale(ffni_GRANDIOSE_NARCISSISM):scale(delta_panas_angry)",mrankB0_ffni_G), grid=TRUE)
 
+mrankB0_ffni_N <- lm(rankChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_angry), data = snake_tot_shrunk, na.action = na.omit)
+summary(mrankB0_ffni_N)
+car::Anova(mrankB0_ffni_N,type = 'III')
 
 
 ###########################################################################################
@@ -322,7 +330,7 @@ anova(mrankA2_ffni1, mrankA2_ffni3)
 
 plot(effect("scale(trial):scale(oppRank):scale(ffni_total)",mrankA2_ffni1), grid=TRUE)
 
-mrankA2_ffni1_0 <- lmer(rankChoice_wi ~ win + close + scale(rankDelta) + scale(rankStart) + scale(trial)*scale(oppRank)*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
+mrankA2_ffni1_0 <- lmer(rankChoice_wi ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank)*scale(ffni_total) + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrankA2_ffni1_0)
 car::Anova(mrankA2_ffni1_0, type = 'III')
 
@@ -356,6 +364,20 @@ mrankA2_1_ffni1_E <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rank
 summary(mrankA2_1_ffni1_E)
 car::Anova(mrankA2_1_ffni1_E, type = 'III')
 
+mrankA2_1_ffni1_N <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank)*scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni1_N)
+car::Anova(mrankA2_1_ffni1_N, type = 'III')
+
+mrankA2_1_ffni1_N0 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart)*scale(ffni_NARCISSISTIC_NEUROTICISM) + scale(trial) + scale(oppRank) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni1_N0)
+car::Anova(mrankA2_1_ffni1_N0, type = 'III')
+
+plot(effect("scale(rankStart):scale(ffni_NARCISSISTIC_NEUROTICISM)",mrankA2_1_ffni1_N0), grid=TRUE)
+
+mrankA2_1_ffni1_V0 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart)*scale(ffni_VULNERABLE_NARCISSISM) + scale(trial) + scale(oppRank) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni1_V0)
+car::Anova(mrankA2_1_ffni1_V0, type = 'III')
+
 #bpni subscales: no similar effect to ffni.
 mrankA2_bpni0_V <- lmer(rankChoice_wi_0 ~ win + close + scale(rankStart) + scale(trial)*scale(oppRank)*scale(bpni_VULNERABILITY) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrankA2_bpni0_V)
@@ -364,3 +386,43 @@ car::Anova(mrankA2_bpni0_V, type = 'III')
 mrankA2_bpni0_G <- lmer(rankChoice_wi_0 ~ win + close + scale(rankStart) + scale(trial)*scale(oppRank)*scale(bpni_GANDIOSITY) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mrankA2_bpni0_G)
 car::Anova(mrankA2_bpni0_G, type = 'III')
+
+
+## for neuroeconomics poster: narcissistic scales total scores, group dep.
+mrankA2_1 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1)
+car::Anova(mrankA2_1, type = 'III')
+
+mrankA2_1s <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank) + scale(rankChoice_wi_0.minus1) 
+                  + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression)
+                  + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1s)
+car::Anova(mrankA2_1s, type = 'III')
+
+
+#narcissistic finding: ffni total*trial interaction
+mrankA2_1_ffni_n <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(ffni_total)*scale(oppRank) +  scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni_n)
+car::Anova(mrankA2_1_ffni_n, type = 'III')
+
+#output as 6x3'' pdf
+plot(effect("scale(trial):scale(ffni_total)",mrankA2_1_ffni_n, xlevels = list('ffni_total' = c(87,153,209))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\nrank-buying', main = 'FFNI')
+
+
+mrankA2_1_ffni_n_s0 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(ffni_total)*scale(oppRank) +  scale(rankChoice_wi_0.minus1) +
+                              scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) +
+                            (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni_n_s0)
+car::Anova(mrankA2_1_ffni_n_s0, type = 'III')
+
+mrankA2_1_ffni_n_s1 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(ffni_total)*scale(oppRank) +  scale(rankChoice_wi_0.minus1) +
+                              scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression) +
+                              (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni_n_s1)
+car::Anova(mrankA2_1_ffni_n_s1, type = 'III')
+
+mrankA2_1_ffni_n_s2 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(ffni_total)*scale(oppRank) +  scale(rankChoice_wi_0.minus1) +
+                              scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression) + scale(dass21_anxiety) + scale(dass21_stress) +
+                              (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni_n_s2)
+car::Anova(mrankA2_1_ffni_n_s2, type = 'III')

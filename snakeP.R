@@ -290,9 +290,6 @@ snake_totP$household_income_log <- snake_totP$household_income
 snake_totP$household_income_log[snake_totP$household_income == 0] <- 1
 snake_totP$household_income_log <- log(snake_totP$household_income_log)
 
-#saving processed dataset
-save(snake_totP, file="snake_totP.Rda")
-
 # creating a shrunk dataset for between-subject mean analysis.
 library(data.table)
 
@@ -314,6 +311,17 @@ snake_totP_shrunk$household_income_log <- log(snake_totP_shrunk$household_income
 
 snake_totP_shrunk$HRSD_no_suic[snake_totP_shrunk$group1_5 == '1'] <- NA 
 
+#creating groups for depressed vs. controls 
+snake_totP$gp_dep <- 1 
+snake_totP$gp_dep[snake_totP$group1_5 == '1'] <- 0  
+snake_totP$gp_dep <- as.factor(snake_totP$gp_dep)
+
+snake_totP_shrunk$gp_dep <- 1 
+snake_totP_shrunk$gp_dep[snake_totP_shrunk$group1_5 == '1'] <- 0  
+snake_totP_shrunk$gp_dep <- as.factor(snake_totP_shrunk$gp_dep)
+
+#saving processed dataset
+save(snake_totP, file="snake_totP.Rda")
 save(snake_totP_shrunk, file="snake_totP_shruT3nk.Rda")
 
 # missingness
@@ -333,18 +341,18 @@ snake_totP_shrunk$ID[is.na(snake_totP_shrunk$bpni_TOTAL)]
 
 
 # distribution.
-par(mfrow=c(3,2))
+par(mfrow=c(1,2))
 summary(snake_totP$gender)
 hist(snake_totP$age)
 hist(snake_totP$gameExp)
 hist(snake_totP$appleChoice,
-     main = "Apple stealing",
-     xlab = "apple choice",
+     main = "Apple Choice",
+     xlab = "choice",
      ylab = "trials")
 
 hist(snake_totP$rankChoice,
-     main = "Paying for rank",
-     xlab = "rank choice",
+     main = "Rank Choice",
+     xlab = "choice",
      ylab = "trials")
 
 hist(snake_totP$appleChoiceDelta,
@@ -479,7 +487,7 @@ prank_AT <- ggplot(snake_totP_AT,aes(trial,rankChoice)) + geom_line() + facet_wr
 
 #Create a variable list which we want in Table 1
 library(compareGroups)
-chars <- snake_totP_shrunk[,c("age_snake","gender.y","race","education","household_income_log","ipip_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM", "HRSD_no_suic", "exit_total", "drs_total")]
+chars <- snake_totP_shrunk[,c("age_snake","gender.y","race","education","household_income_log","ipip_total","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM","ffni_VULNERABLE_NARCISSISM","ffni_total", "HRSD_no_suic", "exit_total", "drs_total")]
 # describe.by(chars,group = df$group_early_no_break)
 c <- compareGroups(chars,snake_totP_shrunk$group1_5, show.descr = TRUE)
 tc <- createTable(c, hide.no = 0, digits = 1, show.p.mul = TRUE)
@@ -519,6 +527,9 @@ corrplot.mixed(cor(chars2, method = "spearman", use = "na.or.complete"), lower.c
 # correlation matrix for subject-dependent variables
 chars3 <- snake_totP_shrunk[,c('ipip_total','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','ffni_ANTAGONISM','ffni_AGENTIC_EXTRAVERSION','ffni_NARCISSISTIC_NEUROTICISM','bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY')]
 corrplot.mixed(cor(chars3, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
+
+chars3b <- snake_totP_shrunk[,c('ipip_total','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY')]
+corrplot.mixed(cor(chars3b, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
 #other measures of psychopathology
 chars4 <- snake_totP_shrunk[,c('HRSD_no_suic','ffni_total','bpni_TOTAL','ipip_total')]

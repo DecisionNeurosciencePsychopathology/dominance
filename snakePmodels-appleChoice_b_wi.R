@@ -195,29 +195,29 @@ car::Anova(mappleB2, type = 'III')
 
 
 ## group predicting narcissism
-mbpni0 <- lm(mbpni_TOTAL ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+mbpni0 <- lm(bpni_TOTAL ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
 summary(mbpni0)
 car::Anova(mbpni0, type = 'III')
 
-ls_mbpni0 <- lsmeans(mbpni0,"group1_5")
-plot(ls_mbpni0, horiz=F, ylab = "", xlab = "groups")
-cld(ls_mbpni0, sort = FALSE)
+ls_bpni0 <- lsmeans(mbpni0,"group1_5")
+plot(ls_bpni0, horiz=F, ylab = "", xlab = "groups")
+cld(ls_bpni0, sort = FALSE)
 
-mbpni1 <- lm(mbpni_GANDIOSITY ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
-summary(mbpni1)
-car::Anova(mbpni1, type = 'III')
+bpni1 <- lm(bpni_GANDIOSITY ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+summary(bpni1)
+car::Anova(bpni1, type = 'III')
 
-ls_mbpni1 <- lsmeans(mbpni1,"group1_5")
-plot(ls_mbpni1, horiz=F, ylab = "", xlab = "groups")
-cld(ls_mbpni1, sort = FALSE)
+ls_bpni1 <- lsmeans(bpni1,"group1_5")
+plot(ls_bpni1, horiz=F, ylab = "", xlab = "groups")
+cld(ls_bpni1, sort = FALSE)
 
-mbpni2 <- lm(mbpni_VULNERABILITY ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+mbpni2 <- lm(bpni_VULNERABILITY ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
 summary(mbpni2)
 car::Anova(mbpni2, type = 'III')
 
-ls_mbpni2 <- lsmeans(mbpni2,"group1_5")
-plot(ls_mbpni2, horiz=F, ylab = "", xlab = "groups")
-cld(ls_mbpni2, sort = FALSE)
+ls_bpni2 <- lsmeans(mbpni2,"group1_5")
+plot(ls_bpni2, horiz=F, ylab = "", xlab = "groups")
+cld(ls_bpni2, sort = FALSE)
 
 mffni0 <- lm(ffni_total ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
 summary(mffni0)
@@ -348,11 +348,12 @@ mappleA1_1_bpni1 <- lmer(appleChoice_wi_0 ~ scale(bpni_TOTAL) + scale(trial) + c
 summary(mappleA1_1_bpni1)
 car::Anova(mappleA1_1_bpni1, type = 'III')
 
-# ffni: //bpni in Vancouver sample
+# ffni:
 mappleA1_ffni0 <- lmer(appleChoice_wi_0 ~ scale(ffni_total) + scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA1_ffni0)
 car::Anova(mappleA1_ffni0, type = 'III')
 
+#best model for ffni
 mappleA1_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA1_ffni1)
 car::Anova(mappleA1_ffni1, type = 'III')
@@ -364,6 +365,27 @@ plot(effect("scale(trial):scale(ffni_total)",mappleA1_ffni1), grid=TRUE)
 mappleA1_ipip <- lmer(appleChoice_wi_0 ~ scale(ipip_total) + scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA1_ipip)
 car::Anova(mappleA1_ipip, type = 'III')
+
+#ffni subscales
+mappleA1_ffni1G <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1G)
+car::Anova(mappleA1_ffni1G, type = 'III')
+
+mappleA1_ffni1V <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1V)
+car::Anova(mappleA1_ffni1V, type = 'III')
+
+mappleA1_ffni1E <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_AGENTIC_EXTRAVERSION) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1E)
+car::Anova(mappleA1_ffni1E, type = 'III')
+
+mappleA1_ffni1A <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_ANTAGONISM) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1A)
+car::Anova(mappleA1_ffni1A, type = 'III')
+
+mappleA1_ffni1N <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_NARCISSISTIC_NEUROTICISM) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1N)
+car::Anova(mappleA1_ffni1N, type = 'III')
 
 # ipip
 mappleA1_ipip0 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + scale(ipip_total)+ (1|ID),  data = snake_totP, na.action = na.omit)
@@ -389,7 +411,7 @@ plot(effect("scale(trial):scale(ipip_total)",mappleA1_ipip2), grid=TRUE)
 plot(effect("scale(ipip_total):scale(oppRank)",mappleA1_ipip2), x.var = 'oppRank', grid=TRUE)
 
 
-#with group, without narcissistic scales 
+###  with group, without narcissistic scales 
 mappleA2_group0 <- lmer(appleChoice_wi_0 ~ group1_5 + scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA2_group0)
 car::Anova(mappleA2_group0, type = 'III')
@@ -428,7 +450,7 @@ car::Anova(mappleA2_group5, type = 'III')
 vif.lme(mappleA2_group5)
 anova(mappleA2_group2, mappleA2_group5)
 plot(effect("win.minus1:group1_5",mappleA2_group5), grid=TRUE, x.var = "win.minus1")
-plot(effect("group1_5:scale(oppRank)",mappleA2_group5), grid=TRUE, x.var = "oppRank")
+plot(effect("group1_5:scale(oppRank)",mappleA2_group5), grid=TRUE, x.var = "oppRank", main = "decreased sensitivity to opponents' rank in suicidal groups", xlab = "opponents' rank", ylab = 'within-subject means\ncheating')
 
 # sensitivity for the best model with group
 mappleA2_group5s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1*group1_5 + scale(oppRank)*group1_5 + scale(score.minus1) + scale(rankEnd.minus1) + age + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
@@ -540,7 +562,10 @@ summary(mappleA3e_ipip)
 car::Anova(mappleA3e_ipip, type = 'III')
 
 
-## checking in HC only
+
+
+
+##### checking in HC only
 
 snake_totP_HC <- snake_totP[snake_totP$group1_5 == '1',]
 
@@ -623,3 +648,223 @@ summary(mapple_HC_ipip3)
 car::Anova(mapple_HC_ipip3, type = 'III')
 
 anova(mapple_HC_ipip2, mapple_HC_ipip3)
+
+
+## depressed- non-depressed groups
+# group & design variables
+
+mappleA2_dep0 <- lmer(appleChoice_wi_0 ~ gp_dep + scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep0)
+car::Anova(mappleA2_dep0, type = 'III')
+
+mappleA2_dep1 <- lmer(appleChoice_wi_0 ~ scale(trial)*gp_dep + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep1)
+car::Anova(mappleA2_dep1, type = 'III')
+
+vif.lme(mappleA2_dep1)
+plot(effect("scale(trial):gp_dep",mappleA2_dep1), grid=TRUE)
+
+# best model with design variables and group_dep
+mappleA2_dep2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2)
+car::Anova(mappleA2_dep2, type = 'III')
+
+vif.lme(mappleA2_dep2)
+plot(effect("scale(oppRank):gp_dep",mappleA2_dep2), grid=TRUE)
+
+anova(mappleA2_dep1, mappleA2_dep2)
+
+mappleA2_dep3 <- lmer(appleChoice_wi_0 ~ scale(trial)*gp_dep + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep3)
+car::Anova(mappleA2_dep3, type = 'III')
+
+mappleA2_dep4 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(score.minus1) + scale(oppRank)*gp_dep*scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep4)
+car::Anova(mappleA2_dep4, type = 'III')
+
+anova(mappleA2_dep2, mappleA2_dep4)
+
+mappleA2_dep5 <- lmer(appleChoice_wi_0 ~ scale(trial)*gp_dep + close.minus1 + win.minus1 + scale(score.minus1) + scale(oppRank)*gp_dep*scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep5)
+car::Anova(mappleA2_dep5, type = 'III')
+
+mappleA2_dep6 <- lmer(appleChoice_wi_0 ~ close.minus1 + win.minus1 + scale(score.minus1) + scale(trial)*scale(oppRank)*gp_dep + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep6)
+car::Anova(mappleA2_dep6, type = 'III')
+
+# sensitivity for the best model with group
+mappleA2_dep2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + age + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2s)
+car::Anova(mappleA2_dep2s, type = 'III')
+
+#test best model after adding narcissistic scales
+mappleA2_dep2_n1 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep*scale(ffni_total) + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2_n1)
+car::Anova(mappleA2_dep2_n1, type = 'III')
+
+vif.lme(mappleA2_dep2_n1)
+plot(effect("scale(oppRank):gp_dep:scale(ffni_total)",mappleA2_dep2_n1), grid=TRUE)
+
+mappleA2_dep2_n2 <- lmer(appleChoice_wi_0 ~ scale(trial)*gp_dep*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2_n2)
+car::Anova(mappleA2_dep2_n2, type = 'III')
+
+vif.lme(mappleA2_dep2_n2)
+plot(effect("scale(trial):gp_dep:scale(ffni_total)",mappleA2_dep2_n2), grid=TRUE)
+
+mappleA2_dep2_n3 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1)*gp_dep*scale(ffni_total) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2_n3)
+car::Anova(mappleA2_dep2_n3, type = 'III')
+
+vif.lme(mappleA2_dep2_n3)
+plot(effect("scale(rankEnd.minus1):gp_dep:scale(ffni_total) ",mappleA2_dep2_n3), grid=TRUE)
+
+mappleA2_dep2_n4 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1)*gp_dep*bpni_TOTAL + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2_n4)
+car::Anova(mappleA2_dep2_n4, type = 'III')
+
+
+## for neuroeconomics poster: narcissistic scales total scores, group dep.
+mappleA2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)  + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2)
+car::Anova(mappleA2, type = 'III')
+
+mappleA2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2s)
+car::Anova(mappleA2s, type = 'III')
+
+
+#narcissistic finding: ffni total*trial interaction
+mappleA1_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1)
+car::Anova(mappleA1_ffni1, type = 'III')
+
+plot(effect("scale(trial):scale(ffni_total)",mappleA1_ffni1, xlevels = list('ffni_total' = c(83,135,203))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\ncheating', main = 'FFNI')
+
+
+mappleA1_ffni1_s0 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1_s0)
+car::Anova(mappleA1_ffni1_s0, type = 'III')
+
+vif.lme(mappleA1_ffni1_s0)
+plot(effect("scale(trial):scale(ffni_total)",mappleA1_ffni1_s0), grid=TRUE)
+
+mappleA1_ffni1_s1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1_s1)
+car::Anova(mappleA1_ffni1_s1, type = 'III')
+
+vif.lme(mappleA1_ffni1_s1)
+
+#group finding: oppRank*trial interaction
+mappleA2_dep2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2)
+car::Anova(mappleA2_dep2, type = 'III')
+
+mappleA2_dep2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2s)
+car::Anova(mappleA2_dep2s, type = 'III')
+
+vif.lme(mappleA2_dep2s)
+
+mappleA2_dep2s2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*gp_dep + scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_dep2s2)
+car::Anova(mappleA2_dep2s2, type = 'III')
+
+vif.lme(mappleA2_dep2s2)
+
+#narcissistic scales in groups
+mffni0_dep <- lm(ffni_total ~ gp_dep + scale(age) + gender.y + scale(education) + scale(household_income_log),  data = snake_totP_shrunk, na.action = na.omit)
+summary(mffni0_dep)
+car::Anova(mffni0_dep, type = 'III')
+
+bpni0_dep <- lm(bpni_TOTAL ~ gp_dep + scale(age) + gender.y + scale(education) + scale(household_income_log),  data = snake_totP_shrunk, na.action = na.omit)
+summary(bpni0_dep)
+car::Anova(bpni0_dep, type = 'III')
+
+#plotting group differences:
+mbpni0 <- lm(bpni_TOTAL ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
+summary(mbpni0)
+car::Anova(mbpni0, type = 'III')
+
+ls_bpni0 <- lsmeans(mbpni0,"group1_5")
+plot(ls_bpni0, horiz=F, ylab = "", xlab = "groups")
+cld(ls_bpni0, sort = FALSE)
+
+
+library(multcompView)
+leastsquare_bpni = ls_bpni0
+CLD_bpni = cld(leastsquare_bpni,
+                      alpha=0.05,
+                      Letters=letters,
+                      adjust="tukey")
+CLD_bpni$.group=gsub(" ", "", CLD_bpni$.group)
+pd = position_dodge(0.8)
+
+p <- ggplot(CLD_bpni,
+       aes(
+         x     = group1_5,
+         y     = lsmean,
+         color = group1_5,
+         label = .group
+       )) +
+  #  facet_wrap( ~ group1_5) +
+  
+  geom_point(shape  = 15,
+             size   = 4,
+             colour = c("grey80", "grey60", "grey40", "orange"),
+             position = pd) +
+  
+  geom_errorbar(
+    aes(ymin  =  lower.CL,
+        ymax  =  upper.CL),
+    width =  0.2,
+    size  =  0.7,
+    colour = c("grey80", "grey60", "grey40", "orange"),
+    position = pd
+  ) +
+  theme_bw() +
+  theme(plot.title = element_text(size=20)) +
+  scale_x_discrete(labels=c("Healthy\ncontrols","Depressed\ncontrols","Suicide\nideators","Suicide\nattempters")) +
+  theme(
+    #axis.title.x=element_blank(),
+    #axis.title.y = text(size=16), 
+    axis.title.x=element_text(size=16),
+    axis.title.y=element_text(size=16),
+    axis.text.x=element_text(size = 12),
+    axis.text.y=element_text(size = 12),
+    legend.title = element_blank(),
+    legend.text = element_text(size = 12),
+    strip.text.x = element_text(size=14),
+    plot.title = element_text(size = 18)) +
+  #theme(legend.text = element_text(colour="black", size = 16)) +
+  #theme(legend.title = element_text(colour="black", size = 16, face = "bold")) +
+  scale_fill_discrete(labels=c("HC: healthy controls (n=45)",
+                               "DC: depressed controls (n=45)",
+                               "SI: suicidal ideators (n=45)",
+                               "attempters (n=24)")) +
+  # theme(axis.title.y=element_text(size=14),
+  #       axis.title.x=element_blank(),
+  #       axis.text.x=element_blank(),
+  #       axis.ticks.x=element_blank()) +
+  
+  ylab("BPNI") +
+  xlab("study groups") +
+  ggtitle("group differences in narcissism") +
+  #         subtitle = "Linear regression model controlling for age and gender") +
+  # labs(
+  #   caption  = paste0(
+  #     "\n",
+  #     "Boxes indicate least square means.\n",
+  #     "Error bars indicate the 95% ",
+  #     "confidence interval of the least squares means. \n",
+  #     "Means sharing a letter are ",
+  #     "not significantly different ",
+  #     "(Tukey-adjusted pairwise comparisons).\n",
+  #     "Early-onset attempts are defined by age at first attempt 50 or less."
+#   ),
+#   hjust = 0.5
+# ) +
+geom_text(nudge_x = 0.2,
+          nudge_y = -0.2,
+          color   = "black") 
+#dev.off()

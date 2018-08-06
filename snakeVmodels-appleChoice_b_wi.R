@@ -175,7 +175,11 @@ mappleB0_ffni_E <- lm(appleChoice_b_logit ~ scale(ffni_AGENTIC_EXTRAVERSION)*sca
 summary(mappleB0_ffni_E)
 car::Anova(mappleB0_ffni_E,type = 'III')
 
+mappleB0_ffni_N <- lm(appleChoice_b_logit ~ scale(ffni_NARCISSISTIC_NEUROTICISM)*scale(delta_panas_angry), data = snake_tot_shrunk, na.action = na.omit)
+summary(mappleB0_ffni_N)
+car::Anova(mappleB0_ffni_N,type = 'III')
 
+plot(effect("scale(ffni_NARCISSISTIC_NEUROTICISM):scale(delta_panas_angry)",mappleB0_ffni_N), grid=TRUE)
 
 ###########################################################################################
 ##################### within-subject means ################################################
@@ -296,3 +300,69 @@ car::Anova(mappleA1_ffni1E, type = 'III')
 mappleA1_ffni1A <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_ANTAGONISM) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)  + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mappleA1_ffni1A)
 car::Anova(mappleA1_ffni1A, type = 'III')
+
+mappleA1_ffni1N <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_NARCISSISTIC_NEUROTICISM)*win.minus1 + close.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)  + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_ffni1N)
+car::Anova(mappleA1_ffni1N, type = 'III')
+
+mappleA1_ffni1N0 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1*scale(ffni_NARCISSISTIC_NEUROTICISM)*win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)  + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_ffni1N0)
+car::Anova(mappleA1_ffni1N0, type = 'III')
+
+anova(mappleA1_ffni1N, mappleA1_ffni1N0)
+vif.lme(mappleA1_ffni1N0)
+plot(effect("close.minus1:scale(ffni_NARCISSISTIC_NEUROTICISM):win.minus1",mappleA1_ffni1N0), grid=TRUE, x.var = 'ffni_NARCISSISTIC_NEUROTICISM')
+
+mappleA1_ffni1V0 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1*scale(ffni_VULNERABLE_NARCISSISM)*win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_ffni1V0)
+car::Anova(mappleA1_ffni1V0, type = 'III')
+
+
+## for neuroeconomics poster: narcissistic scales total scores, group dep.
+mappleA2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)
+                  + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA2)
+car::Anova(mappleA2, type = 'III')
+
+
+mappleA2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1)
+                 + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression) 
+                 + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA2s)
+car::Anova(mappleA2s, type = 'III')
+
+
+#bpni
+mappleA1_bpni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1)
+car::Anova(mappleA1_bpni1, type = 'III')
+
+vif.lme(mappleA1_bpni1)
+
+#output as 6x3'' pdf
+plot(effect("scale(trial):scale(bpni_TOTAL)",mappleA1_bpni1, xlevels = list('bpni_TOTAL' = c(9,55,126))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\ncheating', main = 'BPNI')
+
+
+mappleA1_bpni1_s0 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1) 
+                         + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp)
+                         + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1_s0)
+car::Anova(mappleA1_bpni1_s0, type = 'III')
+
+mappleA1_bpni1_s1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank) + scale(score.minus1) + scale(rankEnd.minus1) 
+                          + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression)
+                          + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1_s1)
+car::Anova(mappleA1_bpni1_s1, type = 'III')
+
+mappleA1_bpni1_s2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) 
+                          + scale(age) + scale(household_income) + ethnicity + gender + scale(gameExp) + scale(dass21_depression) + scale(dass21_anxiety) + scale(dass21_stress)
+                          + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1_s2)
+car::Anova(mappleA1_bpni1_s2, type = 'III')
+
+
+#with depression:
+mappleA2_Vdep2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(dass21_depression) + scale(score.minus1) + scale(rankEnd.minus1) + age + gender + ethnicity + scale(gameExp) + scale(household_income) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA2_Vdep2s)
+car::Anova(mappleA2_Vdep2s, type = 'III')

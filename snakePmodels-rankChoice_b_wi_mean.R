@@ -462,3 +462,94 @@ plot(effect("scale(trial):scale(ipip_total)",mrankA1_ipip3), grid=TRUE)
 plot(effect("scale(ipip_total):scale(score)",mrankA1_ipip3), grid=TRUE)
 
 
+#####################################################################
+############## depressive versus non-depressives ####################
+#####################################################################
+
+## design variables only
+# group and design variables (no narcissistic scales)
+mrankA_dep <- lmer(rankChoice_wi_0 ~ gp_dep + scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_dep)
+car::Anova(mrankA_dep, type = 'III')
+
+vif.lme(mrankA_dep)
+
+mrankA_dep1 <- lmer(rankChoice_wi_0 ~ scale(trial)*gp_dep + scale(rankStart) + scale(oppRank) + gp_dep*win*scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_dep1)
+car::Anova(mrankA_dep1, type = 'III')
+
+vif.lme(mrankA_dep1)
+anova(mrankA_dep, mrankA_dep1)
+
+plot(effect("gp_dep:win:scale(scoreDelta)",mrankA_dep1), grid=TRUE)
+
+mrankA_dep2 <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + gp_dep*scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_dep2)
+car::Anova(mrankA_dep2, type = 'III')
+
+#sensitivity for best model with group
+mrankA_dep1s <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + gp_dep*scale(oppRank)*scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + age + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_dep1s)
+car::Anova(mrankA_dep1s, type = 'III')
+
+
+## for neuroeconomics poster: narcissistic scales total scores, group dep.
+mrankA <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA)
+car::Anova(mrankA, type = 'III')
+vif.lme(mrankA)
+
+mrankAs <- lmer(rankChoice_wi_0 ~ scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankAs)
+car::Anova(mrankAs, type = 'III')
+vif.lme(mrankA)
+
+
+#narcissistic finding: ffni total*trial interaction
+mrankA_ffni_n <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(ffni_total)*scale(scoreDelta)*win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni_n)
+car::Anova(mrankA_ffni_n, type = 'III')
+
+
+# going  with simpler model, since no significant difference and other interaction not very informative.
+snake_totP_NAfree <- snake_totP[!is.na(snake_totP$ffni_total),]
+
+mrankA_ffni_n2 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni_n2)
+car::Anova(mrankA_ffni_n2, type = 'III')
+
+anova(mrankA_ffni_n, mrankA_ffni_n2)
+
+vif.lme(mrankA_ffni_n)
+vif.lme(mrankA_ffni_n2)
+
+#image outputted in 6x3''
+plot(effect("scale(ffni_total):scale(trial)",mrankA_ffni_n2, xlevels = list('ffni_total' = c(83,135,203))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\nrank-buying', main = 'FFNI')
+
+#library(jtools)
+#probe_interaction(mrankA_ffni_n2, pred = "scale(ffni_total)", modx = "scale(trial)", data = snake_totP_NAfree)
+
+# x <- snake_totP_NAfree$ffni_total
+# 
+# snake_totP_NAfree$ffni_total_3group <-
+#   case_when(x > mean(x)+sd(x) ~ "high",
+#             x < mean(x)+sd(x) & x > mean(x)-sd(x) ~ "average",
+#             x < mean(x)-sd(x) ~ "low")
+# 
+# count(snake_totP_NAfree, ffni_total_3group)
+# 
+# snake_totP_NAfree %>% 
+#   ggplot() +
+#   aes(x = trial, y = rankChoice_wi_0, group = ffni_total_3group, color = ffni_total_3group) +
+#   geom_point(color = "grey", alpha = .7) +
+#   geom_smooth(method = "lm")
+
+
+#sensitivity
+mrankA_ffni_n_s0 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + win + scale(rankChoice_wi_0.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni_n_s0)
+car::Anova(mrankA_ffni_n_s0, type = 'III')
+
+mrankA_ffni_n_s1 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + win + scale(rankChoice_wi_0.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni_n_s1)
+car::Anova(mrankA_ffni_n_s1, type = 'III')

@@ -98,6 +98,7 @@ save(snake_ds, file="snake_ds.Rda")
 snake_ds[snake_ds=="NaN"] = NA
 
 # change classes of categorical variables
+snake_ds <- transform(snake_ds, ID = as.factor(ID), n = as.factor(n), name = as.factor(name), gender = as.factor(gender), win = as.factor(win), close = as.factor(close), avatarChoice = as.factor(avatarChoice), consentChoice = as.factor(consentChoice))
 
 # add additional useful variables & create lagged variables
 snake_ds <- snake_ds %>% group_by(ID) %>% mutate(score.minus1 = lag(score, n=1, order_by=trial),
@@ -147,6 +148,10 @@ summary(snake_ds)
 snake_tot <- left_join(snake_ds, snake_suppl, by=c("ID"))
 summary(snake_tot)
 snake_tot$ID <- as.factor(snake_tot$ID)
+
+#computing narcissistic neuroticism
+snake_tot$ffni_indifference_rev <- 24-snake_tot$ffni_indiference
+snake_tot$ffni_NARCISSISTIC_NEUROTICISM <- rowSums(snake_tot[,c('ffni_shame', 'ffni_indifference_rev', 'ffni_need_for_admiration')], na.rm = FALSE)
 
 snake_tot$appleChoice_binary <- NA 
 snake_tot$appleChoice_binary[snake_tot$appleChoice == 1] <- 0 
@@ -254,7 +259,7 @@ library(data.table)
 
 drops <- c("score","oppScore","scoreDiff","win","close","oppName","oppRank","rankStart","rankEnd","score.minus1", "score.minus2", "win.minus1", "win.minus2", "scoreDiff.minus1", "scoreDiff.minus2", "appleChoice.minus1", "appleChoice.minus2", "rankChoice.minus1", "rankChoice.minus2", "close.minus1", "close.minus2", "appleChoiceDelta", "rankChoiceDelta", "scoreDelta", "appleChoiceDelta.minus1",
            "appleChoiceDelta.minus2", "rankChoiceDelta.minus1", "rankChoiceDelta.minus2", "scoreDelta.minus1", "scoreDelta.minus2", "rankEnd.minus1", "rankEnd.minus2", "rankStart.minus1", "rankStart.minus2", "rankGain_initial", "rankGain_final", "appleChoice_binary", "rankChoice_binary", "rankEnd_binary", "rankStart_binary", "rankChoice_binary.minus1", "rankChoice_binary.minus2", "appleChoice_binary.minus1",
-           "appleChoice_binary.minus2", "rankStart_binary.minus1", "rankStart_binary.minus2", "rankEnd_binary.minus1", "rankEnd_binary.minus2", "appleChoice_wi", "rankChoice_wi")
+           "appleChoice_binary.minus2", "rankStart_binary.minus1", "rankStart_binary.minus2", "rankEnd_binary.minus1", "rankEnd_binary.minus2", "appleChoice_wi", "rankChoice_wi", "appleChoice_wi_0", "rankChoice_wi_0", "appleChoice_wi_0.minus1", "appleChoice_wi_0.minus2", "rankChoice_wi_0.minus1", "rankChoice_wi_0.minus2")
 snake_tot_shrunk <- snake_tot[ , !(names(snake_tot) %in% drops)]
 snake_tot_shrunk <- as.data.table(snake_tot_shrunk)
 snake_tot_shrunk <-dcast.data.table(snake_tot_shrunk, ... ~ trial, value.var = c("appleChoice", "rankChoice"))
@@ -294,18 +299,18 @@ snake_tot_aggr = aggr(snake_tot, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labe
 snake_suppl$bpni_TOTAL[snake_tot$ID=='64']
 
 # distribution.
-par(mfrow=c(1,2))
+par(mfrow=c(1,1))
 summary(snake_tot$gender)
 hist(snake_tot$age)
 hist(snake_tot$gameExp)
 hist(snake_tot$appleChoice,
-     main = "Apple stealing",
-     xlab = "apple choice",
+     main = "Apple Choice",
+     xlab = "choice",
      ylab = "trials")
 
 hist(snake_tot$rankChoice,
-     main = "Booster buying",
-     xlab = "booster choice",
+     main = "Rank Choice",
+     xlab = "choice",
      ylab = "trials")
 barchart(snake_tot$appleChoice_binary)
 barchart(snake_tot$rankChoice_binary)
@@ -390,6 +395,15 @@ catVars <- c("gender", "ethnicity", "household_income", "english_first_language"
 table1 <- CreateTableOne(vars = listVars, data = snake_suppl2, factorVars = catVars)
 table1
 
+#Create a variable list which we want in Table 1
+library(compareGroups)
+chars <- snake_tot_shrunk[,c("age","gender","ethnicity","household_income","bpni_GANDIOSITY","bpni_VULNERABILITY","bpni_TOTAL","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM","ffni_ANTAGONISM","ffni_AGENTIC_EXTRAVERSION","ffni_NARCISSISTIC_NEUROTICISM","ffni_VULNERABLE_NARCISSISM","ffni_total")]
+# describe.by(chars,group = df$group_early_no_break)
+c <- compareGroups(chars, show.descr = TRUE)
+tc <- createTable(c, hide.no = 0, digits = 1, show.p.mul = TRUE)
+tc
+export2html(tc, "Table1.html")
+
 
 library(corrplot)
 library(data.table)
@@ -397,8 +411,15 @@ cor(snake_tot_shrunk$appleChoice_b, snake_tot_shrunk$rankChoice_b, method = 'spe
 
 #cormat <- corr.test(chars, method = "spearman")
 names(snake_tot_shrunk)
-chars <- snake_tot_shrunk[,c(109,110,103,104,105,106,88,4,5,9,71,76,77,59:67)]
-setnames(chars,1:8,c("FFNI total", "FFNI grand", "FFNI vuln", "FFNI antag", "FFNI ag.ex.", "BPNI total", "BPNI grand", "BPNI vuln"))
+chars <- snake_tot_shrunk[,c(63,60,59,61,62,98,77,71,76)]
+setnames(chars,1:8,c("FFNI total", "FFNI grand", "FFNI vuln", "FFNI antag", "FFNI ag.ex.", "FFNI n.neur.", "BPNI total", "BPNI grand", "BPNI vuln"))
+summary(chars)
+corrplot(cor(chars, method = "spearman", use = "na.or.complete"))
+corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
+
+names(snake_tot_shrunk)
+chars <- snake_tot_shrunk[,c(63,60,59,77,71,76)]
+setnames(chars,1:8,c("FFNI total", "FFNI grand", "FFNI vuln", "BPNI total", "BPNI grand", "BPNI vuln"))
 summary(chars)
 corrplot(cor(chars, method = "spearman", use = "na.or.complete"))
 corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
