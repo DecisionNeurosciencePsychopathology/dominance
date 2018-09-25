@@ -301,6 +301,9 @@ mrankA2_ipip1 <- lmer(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + win + s
 summary(mrankA2_ipip1)
 car::Anova(mrankA2_ipip1, type = 'III')
 
+plot(effect("scale(ipip_total):scale(trial)",mrankA2_ipip1, xlevels = list('ipip_total' = c(11,26,44))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\nrank-buying', main = 'IPIP-DS')
+
+
 anova(mrankA2_ipip, mrankA2_ipip1)
 plot(effect("scale(ipip_total):scale(trial)",mrankA2_ipip1), grid=TRUE, x.var = 'trial')
 vif.lme(mrankA2_ipip1)

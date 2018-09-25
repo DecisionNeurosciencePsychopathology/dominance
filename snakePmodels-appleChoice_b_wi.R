@@ -241,7 +241,26 @@ car::Anova(mffni2, type = 'III')
 
 ls_mffni2 <- lsmeans(mffni2,"group1_5")
 plot(ls_mffni2, horiz=F, ylab = "", xlab = "groups")
-cld(ls_mffni2, sort = FALSE)
+CLD_ffniV <- cld(ls_mffni2, sort = FALSE)
+
+pd = position_dodge(0.8) 
+p <- ggplot(CLD_ffniV,
+             aes(x     = group1_5, y     = lsmean, label = .group)) +
+  geom_point(shape  = 15, size   = 3,  position = pd) +
+  geom_errorbar(aes(ymin  =  lower.CL, ymax  =  upper.CL), width =  0.2, size  =  0.9, position = pd) +
+  theme_bw() +
+  theme(axis.text    = element_text(size=14), plot.caption = element_text(hjust = 0)) +
+  ylab("FFNI vulnerable\nnarcissism score") +
+  xlab("") +
+  ggtitle ("Vulnerable narcissism by study groups") +
+  scale_x_discrete(labels=c("healthy\ncontrols\n(n = 25)","depressed\ncontrols\n(n = 18)","suicide\nideators\n(n = 20)","suicide\nattempters\n(n = 22)")) +
+  theme(title = element_text(size = 18),
+    axis.title.x=element_text(size=16),
+        axis.title.y = element_text(size = 16)) + 
+  theme(legend.position="none") +
+  geom_text(nudge_x = 0.2, nudge_y = -0.2, color   = "black",  size = 6)
+
+
 
 mffni3 <- lm(ffni_ANTAGONISM ~ group1_5 + scale(age) + gender.y + scale(education),  data = snake_totP_shrunk, na.action = na.omit)
 summary(mffni3)
@@ -408,6 +427,11 @@ car::Anova(mappleA1_ipip2, type = 'III')
 anova(mappleA1_ipip1, mappleA1_ipip2)
 vif.lme(mappleA1_ipip2)
 plot(effect("scale(trial):scale(ipip_total)",mappleA1_ipip2), grid=TRUE)
+plot(effect("scale(trial):scale(ipip_total)",mappleA1_ipip2, xlevels = list('ipip_total' = c(11,26,44))), grid=TRUE, x.var = 'trial', xlab = 'trial', ylab = 'within-subject mean\nstealing', main = 'IPIP-DS')
+median(snake_totP$ipip_total, na.rm = TRUE)
+min(snake_totP$ipip_total, na.rm = TRUE)
+max(snake_totP$ipip_total, na.rm = TRUE)
+
 plot(effect("scale(ipip_total):scale(oppRank)",mappleA1_ipip2), x.var = 'oppRank', grid=TRUE)
 
 
@@ -868,3 +892,19 @@ geom_text(nudge_x = 0.2,
           nudge_y = -0.2,
           color   = "black") 
 #dev.off()
+
+#plots for Kati's grant
+load('snake_totP.Rda')
+
+library(Hmisc) # cut2
+snake_totP$bpni_total_fact <- factor(cut2(snake_totP$bpni_TOTAL, g=3))
+levels(snake_totP$bpni_total_fact) <- c("low BPNI score", "medium BPNI score", "high BPNI score")
+
+snake_totP$ffni_total_fact <- factor(cut2(snake_totP$ffni_total, g=3))
+levels(snake_totP$ffni_total_fact) <- c("low FFNI score", "medium FFNI score", "high FFNI score")
+
+ggplot(snake_totP, aes(trial, appleChoice_wi, color = ffni_total_fact)) + geom_smooth(method = 'loess', span = 10, se = FALSE) +
+  labs(x="trials", y = "within-subject mean point-stealing")
+
+ggplot(snake_totP, aes(trial, rankChoice_wi, color = ffni_total_fact)) + geom_smooth(method = 'loess', span = 10, se = FALSE) +
+  labs(x="trials", y = "within-subject mean point-stealing")

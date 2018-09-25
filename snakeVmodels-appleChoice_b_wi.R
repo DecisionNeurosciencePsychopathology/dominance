@@ -366,3 +366,21 @@ car::Anova(mappleA1_bpni1_s2, type = 'III')
 mappleA2_Vdep2s <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(dass21_depression) + scale(score.minus1) + scale(rankEnd.minus1) + age + gender + ethnicity + scale(gameExp) + scale(household_income) + (1|ID),  data = snake_tot, na.action = na.omit)
 summary(mappleA2_Vdep2s)
 car::Anova(mappleA2_Vdep2s, type = 'III')
+
+
+####plots for Kati's grant
+ggplot(d, aes(AGEATFIRSTATTEMPT, as.numeric(exp), color = rel, lty = sev)) + geom_smooth(method = 'loess', span = 3, se = FALSE) +
+  labs(x="Age at 1st attempt", y = "Probability of exposure to suicidal behavior")
+
+library(Hmisc) # cut2
+snake_tot$bpni_total_fact <- factor(cut2(snake_tot$bpni_TOTAL, g=3))
+levels(snake_tot$bpni_total_fact) <- c("low BPNI score", "medium BPNI score", "high BPNI score")
+
+snake_tot$ffni_total_fact <- factor(cut2(snake_tot$ffni_total, g=3))
+levels(snake_tot$ffni_total_fact) <- c("low FFNI score", "medium FFNI score", "high FFNI score")
+
+ggplot(snake_tot, aes(trial, appleChoice_wi, color = bpni_total_fact)) + geom_smooth(method = 'loess', span = 10, se = FALSE) +
+  labs(x="trials", y = "within-subject mean point-stealing")
+
+ggplot(snake_tot, aes(trial, rankChoice_wi, color = ffni_total_fact)) + geom_smooth(method = 'loess', span = 10, se = FALSE) +
+  labs(x="trials", y = "within-subject mean point-stealing")
