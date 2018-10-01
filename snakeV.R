@@ -454,15 +454,15 @@ corr.test(chars_weird, method = "spearman", use = "complete.obs")
 
 ##########################################################################################################################################
 ##PLOT FOR NEUROCON:
-setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Vancouver")
+setwd("~/code/dominance/snake_data_Vancouver")
 load("snake_tot.Rda")
 load("snake_tot_shrunk.Rda")
 
-setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Pittsburgh_may2018")
+setwd("~/code/dominance/snake_data_Pittsburgh_may2018")
 load("snake_totP.Rda")
 load("snake_totP_shrunk.Rda")
 
-setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/neurocon2018")
+setwd("~/code/GitHub/dominance/neurocon2018")
 
 #Best model with design variables:
 #-Vancouver
@@ -626,6 +626,15 @@ snake_totP$current_rank1 <- 201-snake_totP$rankEnd.minus1
 mappleA1_ipip2_dep <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ipip_total) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(ipip_total) + gp_dep*scale(201-oppRank) + scale(score.minus1) + scale(current_rank1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA1_ipip2_dep)
 car::Anova(mappleA1_ipip2_dep, type = 'III')
+
+library(emmeans)
+em_mappleA1_ipip2_dep <- emmeans(mappleA1_ipip2_dep,"oppRank", by = "gp_dep", at = list(oppRank = c(1,100,200)))
+plot(em_mappleA1_ipip2_dep,horiz = F)
+em_mappleA1_ipip2_ipip <- emmeans(mappleA1_ipip2_dep,"oppRank", by = "ipip_total", 
+                                  at = list(oppRank = c(1,100,200), ipip_total = c(18,26,34)))
+plot(em_mappleA1_ipip2_ipip,horiz = F)
+
+
 ls_mappleA1_ipip2_dep <- lsmeans(mappleA1_ipip2_dep,"oppRank", by = "gp_dep")
 CLD_ipip_dep <- cld(ls_mappleA1_ipip2_dep)
 
