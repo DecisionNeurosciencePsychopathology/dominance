@@ -538,3 +538,59 @@ corrplot.mixed(cor(chars4, method = "spearman", use = "na.or.complete"), lower.c
 chars5 <- snake_totP[,c('delta_panas_angry','delta_panas_scared','delta_panas_pos','ipip_total', 'bpni_TOTAL', 'ffni_total')]
 corrplot.mixed(cor(chars5, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
+### Models with score
+ggplot(snake_totP,aes(x = trial,y = score, color = win)) + geom_point() + facet_wrap(~ID)
+
+ggplot(snake_totP,aes(x = trial,y = score, color = group1_5)) + geom_jitter() + geom_smooth() +facet_wrap(~win)
+
+# examine performance (finally, why didn't we look before?)
+
+## good simple model
+pm1 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + (1|ID), data = snake_totP)
+summary(pm1)
+car::Anova(pm1,'3')
+
+pm2 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + (1|ID), data = snake_totP)
+summary(pm2)
+car::Anova(pm2,'3')
+
+## good "saturated" model
+pm3 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + appleChoice*group1_5 +  (1|ID), data = snake_totP)
+summary(pm3)
+car::Anova(pm3,'3')
+
+pm4 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + appleChoice*group1_5 +
+              + scale(trial)*scale(age) + win*scale(age) + oppRank*scale(age) + appleChoice*scale(age) +
+              +  gender.x +
+              (1|ID), data = snake_totP)
+summary(pm4)
+car::Anova(pm4,'3')
+
+
+## models with score:
+ggplot(snake_totP,aes(x = trial,y = score, color = win)) + geom_point() + facet_wrap(~ID)
+
+ggplot(snake_totP,aes(x = trial,y = score, color = group1_5)) + geom_jitter() + geom_smooth() +facet_wrap(~win)
+
+# examine performance (finally, why didn't we look before?)
+
+## good simple model
+pm1 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + (1|ID), data = snake_totP)
+summary(pm1)
+car::Anova(pm1,'3')
+
+pm2 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + (1|ID), data = snake_totP)
+summary(pm2)
+car::Anova(pm2,'3')
+
+## good "saturated" model
+pm3 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + appleChoice*group1_5 +  (1|ID), data = snake_totP)
+summary(pm3)
+car::Anova(pm3,'3')
+
+pm4 <- lmer(score ~ scale(trial)*group1_5 + win*group1_5 + oppRank*group1_5 + appleChoice*group1_5 +
+              + scale(trial)*scale(age) + win*scale(age) + oppRank*scale(age) + appleChoice*scale(age) +
+              +  gender.x +
+              (1|ID), data = snake_totP)
+summary(pm4)
+car::Anova(pm4,'3')

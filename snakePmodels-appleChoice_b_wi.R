@@ -360,8 +360,6 @@ anova(mappleA1, mappleA2)
 plot(effect("scale(oppRank):scale(score.minus1)",mappleA2), grid=TRUE)
 hist(snake_totP$score.minus1)
 
-
-##with narcissistic scales, without study groups
 #bpni total
 mappleA1_1_bpni1 <- lmer(appleChoice_wi_0 ~ scale(bpni_TOTAL) + scale(trial) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
 summary(mappleA1_1_bpni1)

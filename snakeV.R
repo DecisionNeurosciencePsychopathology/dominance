@@ -452,3 +452,467 @@ cor(chars_weird2, method = "spearman", use = "complete.obs")
 corr.test(chars_weird2, method = "spearman", use = "complete.obs")
 corr.test(chars_weird, method = "spearman", use = "complete.obs")
 
+##########################################################################################################################################
+##PLOT FOR NEUROCON:
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Vancouver")
+load("snake_tot.Rda")
+load("snake_tot_shrunk.Rda")
+
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Pittsburgh_may2018")
+load("snake_totP.Rda")
+load("snake_totP_shrunk.Rda")
+
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/neurocon2018")
+
+#Best model with design variables:
+#-Vancouver
+# mappleA2_V <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+# summary(mappleA2_V)
+# car::Anova(mappleA2_V, type = 'III')
+# 
+# library(sjPlot)
+# pV_design_apple <- plot_model(mappleA2_V, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - undergrads - stealing", order.terms = c(1,4,5,7,3,2,6), colors = c("#008600", "#c55a11"), show.legend = FALSE)
+# 
+# mrankA2_V <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(201-oppRank) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+# summary(mrankA2_V)
+# car::Anova(mrankA2_V, type = 'III')
+# 
+# library(sjPlot)
+# pV_design_rank <- plot_model(mrankA2_V, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - undergrads - rank-buying", order.terms = c(4,5,7,2,3,1,6), colors = c("#008600","#c55a11"), show.legend = FALSE)
+
+stats::cor(as.numeric(snake_totP_shrunk$ipip_total), as.numeric(snake_totP_shrunk$bpni_TOTAL), method = 'spearman', use = "pairwise.complete.obs")
+stats::cor(as.numeric(snake_totP_shrunk$ipip_total), as.numeric(snake_totP_shrunk$ffni_total), method = 'spearman', use = "pairwise.complete.obs")
+
+#sensitivity
+library(plyr)
+snake_tot$ethnicity_simp <- revalue(snake_tot$ethnicity, c("Asian"='asian',"Black or African Canadian"='black',"Other"='other',"White/Caucasian"='caucas'))
+
+mappleA2_V <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(score.minus1) + scale(rankEnd.minus1)  + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA2_V)
+car::Anova(mappleA2_V, type = 'III')
+
+mrankA2_V <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(201-oppRank) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_V)
+car::Anova(mrankA2_V, type = 'III')
+
+library(sjPlot)
+pV_design_apple <- plot_model(mappleA2_V, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - undergrads - stealing",
+                              rm.terms = c("scale(age)", "scale(dass21_depression)", "scale(gameExp)", "scale(household_income)", "ethnicity_simpblack", "ethnicity_simpother","ethnicity_simpcaucas", "gender2"),
+                              order.terms = c(1,4,5,7,3,2,6),
+                              colors = c("#008600", "#c55a11"), show.legend = FALSE) + theme_bw()
+
+library(sjPlot)
+pV_design_rank <- plot_model(mrankA2_V, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - undergrads - rank-buying",
+                             rm.terms = c("scale(age)", "scale(dass21_depression)", "scale(gameExp)", "scale(household_income)", "ethnicity_simpblack", "ethnicity_simpother","ethnicity_simpcaucas", "gender2"),
+                             order.terms = c(4,5,7,2,3,1,6), colors = c("#008600","#c55a11"), show.legend = FALSE) + theme_bw()
+
+#-Pittsburgh
+#best model: same as for Vancouver dataset
+# mappleA2_P <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+# summary(mappleA2_P)
+# car::Anova(mappleA2_P, type = 'III')
+# 
+# library(sjPlot)
+# pP_design_apple <- plot_model(mappleA2_P, show.p = TRUE, show.values = TRUE, title = "Sample 1 - elderly - stealing", order.terms = c(1,4,5,7,3,2,6), colors = c("#008600","#c55a11"))
+# 
+# mrankA0_P <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(201-oppRank) + win + scale(rankStart) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+# summary(mrankA0_P)
+# car::Anova(mrankA0_P, type = 'III')
+# 
+# library(sjPlot)
+# pP_design_rank <- plot_model(mrankA0_P, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 1 - elderly- rank-buying", order.terms = c(1,2,7,5,4,3,6), colors = c( "#008600","#c55a11"))
+
+#sensitivity:
+mappleA2_P <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA2_P)
+car::Anova(mappleA2_P, type = 'III')
+
+mrankA0_P <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(201-oppRank) + win + scale(rankStart) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1)  + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + scale(HRSD_no_suic) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA0_P)
+car::Anova(mrankA0_P, type = 'III')
+
+pP_design_apple <- plot_model(mappleA2_P, show.p = TRUE, show.values = TRUE, title = "Sample 1 - elderly - stealing",
+                              rm.terms = c("scale(age_snake)", "scale(HRSD_no_suic)", "scale(gameExp)", "scale(household_income_log)", "raceASIAN", "raceMORE THAN ONE RACE","raceWHITE", "gender.yMALE", "scale(education)"),
+                              order.terms = c(1,4,5,7,3,2,6), colors = c("#008600","#c55a11")) + theme_bw()
+pP_design_rank <- plot_model(mrankA0_P, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 1 - elderly- rank-buying",
+                             rm.terms = c("scale(age_snake)", "scale(HRSD_no_suic)", "scale(gameExp)", "scale(household_income_log)", "raceASIAN", "raceMORE THAN ONE RACE","raceWHITE", "gender.yMALE", "scale(education)"),
+                             order.terms = c(1,2,7,5,4,3,6), colors = c( "#008600","#c55a11")) + theme_bw()
+
+
+library(grid)
+library(gridExtra)
+grid.arrange(pP_design_apple,pP_design_rank,pV_design_apple,pV_design_rank,
+             layout_matrix = matrix(c(3,1,4,2), ncol=2, byrow=TRUE))
+
+
+
+# trial*narcissism interaction
+#Vancouver
+mappleA1_bpni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1)
+car::Anova(mappleA1_bpni1, type = 'III')
+
+mappleA1_bpni1_lm <- lm(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1),  data = snake_tot, na.action = na.omit)
+summary(mappleA1_bpni1_lm)
+car::Anova(mappleA1_bpni1_lm, type = 'III')
+
+mrankA2_1_ffni1 <- lmer(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank)*scale(ffni_total) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni1)
+car::Anova(mrankA2_1_ffni1, type = 'III')
+
+mrankA2_1_ffni1_lm <- lm(rankChoice_wi_0 ~ win + scale(scoreDelta) + scale(rankStart) + scale(trial)*scale(oppRank)*scale(ffni_total) + scale(rankChoice_wi_0.minus1),  data = snake_tot, na.action = na.omit)
+summary(mrankA2_1_ffni1_lm)
+car::Anova(mrankA2_1_ffni1_lm, type = 'III')
+
+library("rsm")
+pV_narc_apple <- persp(mappleA1_bpni1_lm, scale(bpni_TOTAL) ~ scale(trial), zlab = "appleChoice_wi_0", col = terrain.colors(50), contours = "colors")
+# image(mappleA1_bpni1_lm, scale(bpni_TOTAL) ~ scale(trial), col = rainbow(10, s = 1, v = 0.6, start = 0.1, end = 0.4))
+# contour(mappleA1_bpni1_lm, scale(bpni_TOTAL) ~ scale(trial))
+
+pV_narc_rank <- persp(mrankA2_1_ffni1_lm, scale(ffni_total) ~ scale(trial), zlab = "rankChoice_wi_0", col = terrain.colors(50), contours = "colors")
+
+#Pittsburgh
+mappleA1_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1)
+car::Anova(mappleA1_ffni1, type = 'III')
+
+mappleA1_ffni1_lm <- lm(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ffni1_lm)
+car::Anova(mappleA1_ffni1_lm, type = 'III')
+
+mrankA_ffni3 <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(ffni_total)*scale(scoreDelta)*win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni3)
+car::Anova(mrankA_ffni3, type = 'III')
+
+mrankA_ffni3_lm <- lm(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(rankStart) + scale(oppRank) + scale(ffni_total)*scale(scoreDelta)*win + scale(rankChoice_wi_0.minus1),  data = snake_totP, na.action = na.omit)
+summary(mrankA_ffni3_lm)
+car::Anova(mrankA_ffni3_lm, type = 'III')
+
+pP_narc_apple <- persp(mappleA1_ffni1_lm, scale(ffni_total) ~ scale(trial), zlab = "appleChoice_wi_0", col = terrain.colors(50), contours = "colors")
+pP_narc_rank <- persp(mrankA_ffni3_lm, scale(ffni_total) ~ scale(trial), zlab = "rankChoice_wi_0", col = terrain.colors(50), contours = "colors")
+
+#Pittsburgh IPIP
+mappleA1_ipip2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ipip_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(ipip_total) +  scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ipip2)
+car::Anova(mappleA1_ipip2, type = 'III')
+
+mappleA1_ipip2_lm <- lm(appleChoice_wi_0 ~ scale(trial)*scale(ipip_total) + close.minus1 + win.minus1 + scale(oppRank)*scale(ipip_total) +  scale(oppRank)*scale(score.minus1) + scale(rankEnd.minus1),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ipip2_lm)
+car::Anova(mappleA1_ipip2_lm, type = 'III')
+
+mrankA2_ipip1 <- lmer(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ipip1)
+car::Anova(mrankA2_ipip1, type = 'III')
+
+mrankA2_ipip1_lm <- lm(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + win + scale(rankStart) + scale(oppRank) + scale(scoreDelta) + scale(rankChoice_wi_0.minus1),  data = snake_totP, na.action = na.omit)
+summary(mrankA2_ipip1_lm)
+car::Anova(mrankA2_ipip1_lm, type = 'III')
+
+pP_ipip_apple <- persp(mappleA1_ipip2_lm, scale(ipip_total) ~ scale(trial), zlab = "appleChoice_wi_0", col = terrain.colors(50), contours = "colors")
+pP_ipip_rank <- persp(mrankA2_ipip1_lm, scale(ipip_total) ~ scale(trial), zlab = "rankChoice_wi_0", col = terrain.colors(50), contours = "colors")
+
+library(grid)
+library(gridExtra)
+grid.arrange(pV_narc_apple,pV_narc_rank,pP_narc_apple,pP_narc_rank,pP_ipip_apple,pP_ipip_rank,
+             layout_matrix = matrix(c(1,3,5,2,4,6), ncol=3, byrow=TRUE))
+
+# plots for depression and the interesting effect with ipip
+mappleA1_ipip2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ipip_total) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(ipip_total) +  scale(201-oppRank)*scale(score.minus1) + scale(rankEnd.minus1) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ipip2)
+car::Anova(mappleA1_ipip2, type = 'III')
+
+#best model with ipip and group_dep
+snake_totP$current_rank1 <- 201-snake_totP$rankEnd.minus1
+mappleA1_ipip2_dep <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ipip_total) + close.minus1 + win.minus1 + scale(201-oppRank)*scale(ipip_total) + gp_dep*scale(201-oppRank) + scale(score.minus1) + scale(current_rank1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = snake_totP, na.action = na.omit)
+summary(mappleA1_ipip2_dep)
+car::Anova(mappleA1_ipip2_dep, type = 'III')
+ls_mappleA1_ipip2_dep <- lsmeans(mappleA1_ipip2_dep,"oppRank", by = "gp_dep")
+CLD_ipip_dep <- cld(ls_mappleA1_ipip2_dep)
+
+pP_dep_ipip <- plot_model(mappleA1_ipip2_dep, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - elderly IPIP, depression", colors = c( "#008600","#c55a11"), sort.est = TRUE, rm.terms = c("scale(age_snake)", "scale(gameExp)", "scale(household_income_log)", "raceASIAN", "raceMORE THAN ONE RACE","raceWHITE", "gender.yMALE", "scale(education)", "scale(score.minus1)", "close.minus11", "scale(current_rank1)", "win.minus11"), order.terms = c(1,2,5,3,6,4,7)) + theme_bw()
+
+#plot based on GLM
+ee <- Effect(c("ipip_total","oppRank", "gp_dep"), mappleA1_ipip2_dep)
+ee <- data.frame(ee)
+ee$ipip_level <- cut(ee$ipip_total, 3, include.lowest = TRUE, labels = c("low dominance\n(scores 11-22)", "medium dominance\n(scores 23-33)", "high dominance\n(scores34-44)"))
+dplyr::count(ee,ipip_level)
+
+ggplot(data = ee, aes(201-oppRank, fit, colour = ipip_level, fill = ipip_level)) +
+  geom_line() +
+  geom_ribbon(data = ee, colour= NA, alpha = 0.1, aes(ymin = lower, ymax = upper)) +
+  facet_wrap(~gp_dep) +
+  theme_bw() +
+  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+  scale_color_manual(values = c("#008600", "black", "#c55a11"))
+
+
+#plot(effect("scale(ipip_total):scale(201-oppRank)",mappleA1_ipip2, xlevels = list('ipip_total' = c(11,26,44))), grid=TRUE, x.var = 'oppRank', xlab = 'oppRank', ylab = 'within-subject mean\nstealing', main = 'IPIP-DS')
+
+snake_totP_no_NA_ipip <- snake_totP[is.na(snake_totP$ipip_total)==FALSE,] 
+snake_totP_no_NA_ipip$ipip_level <- cut(snake_totP_no_NA_ipip$ipip_total, 3, include.lowest = TRUE, labels = c("low dominance\n(scores 11-22)", "medium dominance\n(scores 23-33)", "high dominance\n(scores34-44)"))
+dplyr::count(snake_totP_no_NA_ipip,ipip_level)
+
+snake_totP_no_NA_ipip$hrsd_level <- cut(snake_totP_no_NA_ipip$HRSD_no_suic, 3, include.lowest = TRUE)
+dplyr::count(snake_totP_no_NA_ipip,hrsd_level)
+
+library(ggplot2)
+ggplot(snake_totP_no_NA_ipip,aes(201-oppRank, appleChoice_wi_0, colour = factor(ipip_level))) +
+  geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
+  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+  theme_bw()
+
+
+##models with score
+
+# examine performance (finally, why didn't we look before?)
+
+## good simple model
+hist(snake_totP$score)
+table(snake_totP$gp_dep)
+table(snake_totP$group1_5)
+
+pm0_dep <- lmer(score ~ scale(trial)*gp_dep  + (1|ID), data = snake_totP)
+summary(pm0_dep)
+car::Anova(pm0_dep,'3')
+
+vif.lme(pm0_dep)
+plot(effect("scale(trial):gp_dep ",pm1_dep), grid=TRUE)
+
+
+
+
+pm1_dep <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep  + (1|ID), data = snake_totP)
+summary(pm1_dep)
+car::Anova(pm1_dep,'3')
+
+vif.lme(pm0s2_dep)
+
+pm2_dep <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep + scale(oppRank)*gp_dep + (1|ID), data = snake_totP)
+summary(pm2_dep)
+car::Anova(pm2_dep,'3')
+
+vif.lme(pm2_dep)
+
+
+
+## good "saturated" model
+pm3 <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep + oppRank*gp_dep + appleChoice*gp_dep +  (1|ID), data = snake_totP)
+summary(pm3)
+car::Anova(pm3,'3')
+
+pm4 <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep + oppRank*gp_dep + appleChoice*gp_dep +
+              + scale(trial)*scale(age) + win*scale(age) + oppRank*scale(age) + appleChoice*scale(age) +
+              +  gender.x +
+              (1|ID), data = snake_totP)
+summary(pm4)
+car::Anova(pm4,'3')
+
+
+#additional score models
+pm0s_dep <- lmer(score ~ scale(trial)*gp_dep + gender.x*gp_dep + scale(age_snake)*gp_dep + scale(gameExp)*gp_dep  + (1|ID), data = snake_totP)
+summary(pm0s_dep)
+car::Anova(pm0s_dep,'3')
+
+vif.lme(pm0s_dep)
+
+pm0s1_dep <- lmer(score ~ scale(trial)*gp_dep + gender.x*scale(age_snake) + scale(age_snake)*gp_dep + scale(gameExp)*scale(age_snake)  + (1|ID), data = snake_totP)
+summary(pm0s1_dep)
+car::Anova(pm0s1_dep,'3')
+
+vif.lme(pm0s1_dep)
+
+anova(pm0s1_dep, pm0s_dep)
+
+pm0s2_dep <- lmer(score ~ scale(trial)*gp_dep + scale(oppRank)*gp_dep + gender.x + scale(age_snake) + scale(gameExp) + win.minus1 + scale(scoreDelta.minus1) + scale(appleChoice) +
+                    scale(trial)*scale(age_snake) + scale(oppRank)*scale(age_snake) + gender.x*scale(age_snake) + scale(gameExp)*scale(age_snake) + win.minus1*scale(age_snake) + scale(scoreDelta.minus1)*scale(age_snake) + scale(appleChoice)*scale(age_snake) +
+                    scale(trial)*gender.x + scale(oppRank)*gender.x + scale(gameExp)*gender.x + win.minus1*gender.x + scale(scoreDelta.minus1)*gender.x + scale(appleChoice)*gender.x +
+                    scale(trial)*scale(gameExp) + scale(oppRank)*scale(gameExp) + win.minus1*scale(gameExp) + scale(scoreDelta.minus1)*scale(gameExp) + scale(appleChoice)*scale(gameExp) + (1|ID), data = snake_totP)
+
+summary(pm0s2_dep)
+car::Anova(pm0s2_dep,'3')
+
+vif.lme(pm0s2_dep)
+
+#good model from Anna's models
+pm0_ipipP <- lmer(score ~ scale(trial)*scale(ipip_total)+ (1|ID), data = snake_totP)
+summary(pm0_ipipP)
+car::Anova(pm0_ipipP,'3')
+
+plot(effect("scale(trial):scale(ipip_total)",pm0_depP), grid=TRUE)
+
+pm0_bpniP <- lmer(score ~ scale(trial)*scale(bpni_TOTAL)+ (1|ID), data = snake_totP)
+summary(pm0_bpniP)
+car::Anova(pm0_bpniP,'3')
+
+pm0_ffniP <- lmer(score ~ scale(trial)*scale(ffni_total)+ (1|ID), data = snake_totP)
+summary(pm0_ffniP)
+car::Anova(pm0_ffniP,'3')
+
+
+pm0_depP <- lmer(score ~ scale(trial)*gp_dep  + (1|ID), data = snake_totP)
+summary(pm0_depP)
+car::Anova(pm0_depP,'3')
+
+pm0s2c_dep <- lmer(score ~ scale(trial)*gp_dep + scale(oppRank)*gp_dep + gender.x + scale(age_snake) + scale(gameExp) + win.minus1 + scale(appleChoice) +
+                     scale(appleChoice)*scale(age_snake) + (1|ID), data = snake_totP)
+
+summary(pm0s2c_dep)
+car::Anova(pm0s2c_dep,'3')
+
+plot(effect("gp_dep:scale(oppRank)",pm0s2c_dep), grid=TRUE)
+plot(effect("scale(age_snake):scale(appleChoice)",pm0s2c_dep), grid=TRUE)
+
+vif.lme(pm0s2c_dep)
+anova(pm0s2c_dep, pm3)
+
+
+pm0s2c_dep_narc <- lmer(score ~ scale(trial)*gp_dep + scale(oppRank)*gp_dep + gender.x + scale(age_snake) + scale(gameExp) + win.minus1 + scale(appleChoice) +
+                          scale(appleChoice)*scale(age_snake) +
+                          scale(bpni_TOTAL) + (1|ID), data = snake_totP)
+
+summary(pm0s2c_dep_narc)
+car::Anova(pm0s2c_dep_narc,'3')
+
+#Vancouver
+##no effect of narcissistic scales on score
+pm0_narcV <- lmer(score ~ scale(trial)*scale(ffni_total) + gender + scale(age) + ethnicity_simp+ scale(gameExp) + (1|ID), data = snake_tot)
+summary(pm0_narcV)
+car::Anova(pm0_narcV,'3')
+
+
+pm0all_depV <- lmer(score ~ scale(trial) + gender + scale(age) + scale(oppRank) + win.minus1 + scale(gameExp) + scale(appleChoice) + (1|ID), data = snake_tot)
+summary(pm0all_depV)
+car::Anova(pm0all_depV,'3')
+
+vif.lme(pm0all_depV)
+
+pm0s2_depV <- lmer(score ~ scale(trial)*gender*scale(age) + scale(oppRank) win.minus1 + scale(gameExp) + scale(appleChoice) + (1|ID), data = snake_tot)
+summary(pm0s2_depV)
+car::Anova(pm0s2_depV,'3')
+
+plot(effect("gender:scale(age):scale(trial)",pm0s2_depV), grid=TRUE)
+
+vif.lme(pm0s2_depV)
+
+##model plots for neurocon2018
+pm0_depP <- lmer(score ~ scale(trial)*gp_dep + gender.x + scale(age_snake) + race + scale(gameExp) + (1|ID), data = snake_totP)
+summary(pm0_depP)
+car::Anova(pm0_depP,'3')
+
+pP_dep_engage <- plot_model(pm0_depP, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - score predicted by group", colors = c( "#008600","#c55a11"), terms = c("scale(trial)","gp_dep1", "scale(trial):gp_dep1"), order.terms = c(1,2,3)  ,sort.est = TRUE) + theme_bw()
+
+
+pm0_depP_ipip <- lmer(score ~ scale(trial)*gp_dep + scale(trial)*scale(ipip_total) + gender.x + scale(age_snake) + race + scale(gameExp) + (1|ID), data = snake_totP_no_NA_ipip)
+summary(pm0_depP_ipip)
+car::Anova(pm0_depP_ipip,'3')
+
+pP_dep_ipip_engage <- plot_model(pm0_depP_ipip, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - score predicted by group and ipip", colors = c( "#008600","#c55a11"), terms = c("scale(trial)", "scale(ipip_total)", "scale(trial):scale(ipip_total)","gp_dep1", "scale(trial):gp_dep1"), order.terms = c(1,2,4,3,5)  ,sort.est = TRUE) + theme_bw()
+
+library(ggplot2)
+ggplot(snake_totP_no_NA_ipip,aes(scale(trial), score, colour = factor(ipip_level))) +
+  geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
+  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+  theme_bw()
+
+
+pm0_ipipP <- lmer(score ~ scale(trial)*scale(ipip_total) + gp_dep + gender.x + scale(age_snake) + race + scale(gameExp) + (1|ID), data = snake_totP)
+summary(pm0_ipipP)
+car::Anova(pm0_ipipP,'3')
+
+pP_ipip_engage <- plot_model(pm0_ipipP, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - score predicted by IPIP-DS scores", colors = c("#c55a11"), terms = c("scale(trial)","scale(ipip_total)", "scale(trial):scale(ipip_total)"), order.terms = c(1,2,3)  ,sort.est = TRUE) + theme_bw()
+
+
+snake_totP$race <- relevel(snake_totP$race, ref = "MORE THAN ONE RACE")
+
+pm0allP <- lmer(score ~ scale(trial) + gender.x + scale(age_snake) + scale(oppRank) + win.minus1 + scale(gameExp) + scale(appleChoice) + race + (1|ID), data = snake_totP)
+summary(pm0allP)
+car::Anova(pm0allP,'3')
+
+pP_score_all <- plot_model(pm0allP, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - model predicting score", colors = c( "#008600","#c55a11"), rm.terms = c("raceWHITE", "raceASIAN", "raceAFRICAN AMERICAN"), order.terms = c(7,6,1,4,3,5,2)) + theme_bw()
+
+
+snake_tot$ethnicity_simp <- relevel(snake_tot$ethnicity_simp, ref = "other")
+
+pm0allV <- lmer(score ~ scale(trial) + gender + scale(age) + scale(oppRank) + win.minus1 + scale(gameExp) + scale(appleChoice) + ethnicity_simp + (1|ID), data = snake_tot)
+summary(pm0allV)
+car::Anova(pm0allV,'3')
+
+pV_score_all <- plot_model(pm0allV, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 1 - model predicting score", colors = c( "#008600","#c55a11"), rm.terms = c("ethnicity_simpcaucas", "ethnicity_simpasian", "ethnicity_simpblack"), sort.est = TRUE) + theme_bw()
+
+library(grid)
+library(gridExtra)
+grid.arrange(pV_score_all,pP_score_all,
+             layout_matrix = matrix(c(1,2), ncol=2, byrow=TRUE))
+
+
+#group differences in narcissism and dominance
+snake_totP_shrunk$gp_dep <- "0"
+snake_totP_shrunk$gp_dep[snake_totP_shrunk$group1_5 != "1"] <- "1"
+table(snake_totP_shrunk$gp_dep)
+table(snake_totP_shrunk$group1_5)
+
+mbpni0 <- lm(bpni_TOTAL ~ gp_dep + scale(age) + gender.x + scale(education) + race,  data = snake_totP_shrunk, na.action = na.omit)
+summary(mbpni0)
+car::Anova(mbpni0, type = 'III')
+ls_bpni0 <- lsmeans(mbpni0,"gp_dep")
+plot(ls_bpni0, horiz=F, ylab = "", xlab = "groups")
+pairs(ls_bpni0)
+CLD_bpni <- cld(ls_bpni0, sort = FALSE)
+
+mffni0 <- lm(ffni_total ~ gp_dep + scale(age) + gender.x + scale(education) + race,  data = snake_totP_shrunk, na.action = na.omit)
+summary(mffni0)
+car::Anova(mffni0, type = 'III')
+ls_ffni0 <- lsmeans(mffni0,"gp_dep")
+plot(ls_ffni0, horiz=F, ylab = "", xlab = "groups")
+CLD_ffni <- cld(ls_ffni0, sort = FALSE)
+
+mipip0 <- lm(ipip_total ~ gp_dep + scale(age) + gender.x + scale(education) + race,  data = snake_totP_shrunk, na.action = na.omit)
+summary(mipip0)
+car::Anova(mipip0, type = 'III')
+ls_ipip0 <- lsmeans(mipip0,"gp_dep")
+plot(ls_ipip0, horiz=F, ylab = "", xlab = "groups")
+CLD_ipip <- cld(ls_ipip0, sort = FALSE)
+
+pd = position_dodge(0.8)
+p_bpni <- ggplot(CLD_bpni, aes(x     = gp_dep, y = lsmean, fill = .group, label = .group)) +
+  geom_point(shape  = 15, size   = 3, colour = c("#008600", "#c55a11"), position = pd) +
+  geom_errorbar(aes(ymin  =  lower.CL, ymax  =  upper.CL), width =  0.2, size  =  0.9, colour = c("#008600", "#c55a11"), position = pd) +
+  theme_bw() +
+  scale_x_discrete(labels=c("Healthy group (N = 25)","Depressed group (N = 60)")) +
+  ylab("BPNI scores") +
+  xlab("Study groups") +
+  ggtitle("Group differences in narcissism and dominance") +
+  theme(axis.title.y   = element_text(size = 16), axis.title.x   = element_blank(), axis.text.x = element_blank(), axis.text.y = element_text(siz=12), plot.caption = element_text(hjust = 0),
+  legend.title = element_blank(), legend.text = element_blank(),
+  strip.text.x = element_blank(),
+  plot.title = element_text(size = 18))
+  
+
+p_ffni <- ggplot(CLD_ffni, aes(x     = gp_dep, y = lsmean, fill = .group, label = .group)) +
+  geom_point(shape  = 15, size   = 3, colour = c("#008600", "#c55a11"), position = pd) +
+  geom_errorbar(aes(ymin  =  lower.CL, ymax  =  upper.CL), width =  0.2, size  =  0.9, colour = c("#008600", "#c55a11"), position = pd) +
+  theme_bw() +
+  scale_x_discrete(labels=c("Healthy group (N = 25)","Depressed group (N = 60)")) +
+  ylab("FFNI scores") +
+  xlab("Study groups") +
+  theme(axis.title.y   = element_text(size = 16), axis.title.x   = element_blank(), axis.text.x = element_blank(), axis.text.y = element_text(siz=12), plot.caption = element_text(hjust = 0),
+        legend.title = element_blank(), legend.text = element_blank(),
+        strip.text.x = element_text(size=14),
+        plot.title = element_blank())
+
+p_ipip <- ggplot(CLD_ipip, aes(x     = gp_dep, y = lsmean, fill = .group, label = .group)) +
+  geom_point(shape  = 15, size   = 3, colour = c("#008600", "#c55a11"), position = pd) +
+  geom_errorbar(aes(ymin  =  lower.CL, ymax  =  upper.CL), width =  0.2, size  =  0.9, colour = c("#008600", "#c55a11"), position = pd) +
+  theme_bw() +
+  scale_x_discrete(labels=c("Healthy group (N = 25)","Depressed group (N = 60)")) +
+  ylab("IPIP-DS scores") +
+  xlab("Study groups") +
+    theme(axis.title   = element_text(size = 16), axis.text    = element_text(size=12), plot.caption = element_text(hjust = 0),
+        legend.title = element_blank(), legend.text = element_blank(),
+        strip.text.x = element_blank(),
+        plot.title = element_blank())
+
+library(grid)
+library(gridExtra)
+grid.arrange(p_bpni,p_ffni,p_ipip,
+             layout_matrix = matrix(c(1,2,3), ncol=1, byrow=TRUE))
