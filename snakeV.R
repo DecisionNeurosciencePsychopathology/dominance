@@ -454,15 +454,15 @@ corr.test(chars_weird, method = "spearman", use = "complete.obs")
 
 ##########################################################################################################################################
 ##PLOT FOR NEUROCON:
-setwd("~/code/dominance/snake_data_Vancouver")
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Vancouver")
 load("snake_tot.Rda")
 load("snake_tot_shrunk.Rda")
 
-setwd("~/code/dominance/snake_data_Pittsburgh_may2018")
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/snake_data_Pittsburgh_may2018")
 load("snake_totP.Rda")
 load("snake_totP_shrunk.Rda")
 
-setwd("~/code/GitHub/dominance/neurocon2018")
+setwd("~/Dropbox/USA/Pittsburgh/GitHub/dominance/neurocon2018")
 
 #Best model with design variables:
 #-Vancouver
@@ -629,10 +629,25 @@ car::Anova(mappleA1_ipip2_dep, type = 'III')
 
 library(emmeans)
 em_mappleA1_ipip2_dep <- emmeans(mappleA1_ipip2_dep,"oppRank", by = "gp_dep", at = list(oppRank = c(1,100,200)))
-plot(em_mappleA1_ipip2_dep,horiz = F)
+plot_dep <- plot(em_mappleA1_ipip2_dep, horiz = F, aes(fill = c("#008600", "black", "#c55a11", "#008600", "black", "#c55a11"))) +
+  theme_bw() +
+  scale_y_reverse()
+
+emmip(mappleA1_ipip2_dep, ipip_total ~ oppRank, at = list(ipip_total = c(18,26,34), oppRank = c(1,100,200)), CIs = TRUE, col = c("#008600", "black", "#c55a11")) +
+  theme_bw() +
+  scale_y_reverse () +
+  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+  scale_color_manual(values = c("#008600", "black", "#c55a11"))
+
+emmip(mappleA1_ipip2_dep, gp_dep ~ oppRank | gp_dep, at = list(oppRank = c(1,100,200)), CIs = TRUE) +
+  theme_bw() +
+  scale_y_reverse ()
+  
+
+
 em_mappleA1_ipip2_ipip <- emmeans(mappleA1_ipip2_dep,"oppRank", by = "ipip_total", 
                                   at = list(oppRank = c(1,100,200), ipip_total = c(18,26,34)))
-plot(em_mappleA1_ipip2_ipip,horiz = F)
+plot_ipip <- plot(em_mappleA1_ipip2_ipip,horiz = F)
 
 
 ls_mappleA1_ipip2_dep <- lsmeans(mappleA1_ipip2_dep,"oppRank", by = "gp_dep")
