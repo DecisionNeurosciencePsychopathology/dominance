@@ -526,7 +526,7 @@ corrplot.mixed(cor(chars2, method = "spearman", use = "na.or.complete"), lower.c
 
 # correlation matrix for subject-dependent variables
 chars3 <- snake_totP_shrunk[,c('ipip_total','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','ffni_ANTAGONISM','ffni_AGENTIC_EXTRAVERSION','ffni_NARCISSISTIC_NEUROTICISM','bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY')]
-corrplot.mixed(cor(chars3, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
+corrplot.mixed(cor(chars3, method = "pearson", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)
 
 chars3b <- snake_totP_shrunk[,c('ipip_total','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY')]
 corrplot.mixed(cor(chars3b, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1)

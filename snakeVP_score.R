@@ -88,8 +88,8 @@ car::Anova(pm3,'3')
 vif.lme(pm3)
 anova(pm2_dep, pm3)
 
-pm4 <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep + oppRank*gp_dep + appleChoice*gp_dep +
-              + scale(trial)*scale(age) + win*scale(age) + oppRank*scale(age) + appleChoice*scale(age) +
+pm4 <- lmer(score ~ scale(trial)*gp_dep + win*gp_dep + scale(oppRank)*gp_dep + scale(appleChoice)*gp_dep +
+              + scale(trial)*scale(age) + win*scale(age) + scale(oppRank)*scale(age) + scale(appleChoice)*scale(age) +
               +  gender.x +
               (1|ID), data = snake_totP)
 summary(pm4)
@@ -98,9 +98,108 @@ car::Anova(pm4,'3')
 vif.lme(pm4)
 anova(pm3, pm4)
 
-library(effects)
-plot(effect("appleChoice:scale(age)",pm4), grid=TRUE)
+pm5 <- lmer(score ~ scale(trial) + win + scale(oppRank)*gp_dep + 
+              gender.x +
+              (1|ID), data = snake_totP)
+summary(pm5)
+car::Anova(pm5,'3')
 
+vif.lme(pm5)
+anova(pm4, pm5)
+
+
+library(effects)
+plot(effect("scale(oppRank):gp_dep",pm5), grid=TRUE)
+
+
+pm5V <- lmer(score ~ scale(trial) + win + scale(oppRank)*scale(dass21_depression) + 
+              gender +
+              (1|ID), data = snake_tot)
+summary(pm5V)
+car::Anova(pm5V,'3')
+
+vif.lme(pm5V)
+anova(pm4, pm5V)
+
+pm4V <- lmer(score ~ scale(trial)*scale(age) + win*scale(age) + scale(oppRank)*gender + scale(appleChoice)*scale(age) +
+              (1|ID), data = snake_tot)
+summary(pm4V)
+car::Anova(pm4V,'3')
+
+# narcissism and dominance
+pm5ipip <- lmer(score ~ scale(trial)*scale(ipip_total) + win*scale(ipip_total) + scale(oppRank)*gp_dep + scale(oppRank)*scale(ipip_total) + 
+              gender.x*scale(ipip_total) +
+              (1|ID), data = snake_totP)
+summary(pm5ipip)
+car::Anova(pm5ipip,'3')
+
+vif.lme(pm5ipip)
+anova(pm4, pm5ipip)
+
+
+pm5bpni <- lmer(score ~ scale(trial)*scale(bpni_TOTAL) + win*scale(bpni_TOTAL) + scale(oppRank)*gp_dep + scale(oppRank)*scale(bpni_TOTAL) + 
+                  gender.x*scale(bpni_TOTAL) +
+                  (1|ID), data = snake_totP)
+summary(pm5bpni)
+car::Anova(pm5bpni,'3')
+
+vif.lme(pm5bpni)
+anova(pm4, pm5bpni)
+
+plot(effect("scale(bpni_TOTAL):win",pm5bpni), grid=TRUE)
+
+pm5bpniV <- lmer(score ~ scale(trial)*scale(bpni_VULNERABILITY) + win*scale(bpni_VULNERABILITY) + scale(oppRank)*gp_dep + scale(oppRank)*scale(bpni_VULNERABILITY) + 
+                  gender.x*scale(bpni_VULNERABILITY) +
+                  (1|ID), data = snake_totP)
+summary(pm5bpniV)
+car::Anova(pm5bpniV,'3')
+
+pm5bpniG <- lmer(score ~ scale(trial)*scale(bpni_GANDIOSITY) + win*scale(bpni_GANDIOSITY) + scale(oppRank)*gp_dep + scale(oppRank)*scale(bpni_GANDIOSITY) + 
+                   gender.x*scale(bpni_GANDIOSITY) +
+                   (1|ID), data = snake_totP)
+summary(pm5bpniG)
+car::Anova(pm5bpniG,'3')
+
+
+pm5ffni <- lmer(score ~ scale(trial)*scale(ffni_total) + win*scale(ffni_total) + scale(oppRank)*gp_dep + scale(oppRank)*scale(ffni_total) + 
+                  gender.x*scale(ffni_total) +
+                  (1|ID), data = snake_totP)
+summary(pm5ffni)
+car::Anova(pm5ffni,'3')
+
+vif.lme(pm5ffni)
+anova(pm4, pm5ffni)
+
+pm5ffniV <- lmer(score ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM) + win*scale(ffni_VULNERABLE_NARCISSISM) + scale(oppRank)*gp_dep + scale(oppRank)*scale(ffni_VULNERABLE_NARCISSISM) + 
+                   gender.x*scale(ffni_VULNERABLE_NARCISSISM) +
+                   (1|ID), data = snake_totP)
+summary(pm5ffniV)
+car::Anova(pm5ffniV,'3')
+
+pm5ffniG <- lmer(score ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM) + win*scale(ffni_GRANDIOSE_NARCISSISM) + scale(oppRank)*gp_dep + scale(oppRank)*scale(ffni_GRANDIOSE_NARCISSISM) + 
+                   gender.x*scale(ffni_GRANDIOSE_NARCISSISM) +
+                   (1|ID), data = snake_totP)
+summary(pm5ffniG)
+car::Anova(pm5ffniG,'3')
+
+#Vancouver-narcissism
+pm5bpni <- lmer(score ~ scale(trial)*scale(bpni_TOTAL) + win*scale(bpni_TOTAL) + scale(oppRank)*scale(bpni_TOTAL) + 
+                  gender*scale(bpni_TOTAL) +
+                  (1|ID), data = snake_tot)
+summary(pm5bpni)
+car::Anova(pm5bpni,'3')
+
+vif.lme(pm5bpni)
+anova(pm4, pm5bpni)
+
+pm5ffni <- lmer(score ~ scale(trial)*scale(ffni_total) + win*scale(ffni_total) + scale(oppRank)*scale(ffni_total) + 
+                  gender*scale(ffni_total) +
+                  (1|ID), data = snake_tot)
+summary(pm5ffni)
+car::Anova(pm5ffni,'3')
+
+vif.lme(pm5ffni)
+anova(pm4, pm5ffni)
 
 #additional score models
 pm0s_dep <- lmer(score ~ scale(trial)*gp_dep + gender.x*gp_dep + scale(age_snake)*gp_dep + scale(gameExp)*gp_dep  + (1|ID), data = snake_totP)

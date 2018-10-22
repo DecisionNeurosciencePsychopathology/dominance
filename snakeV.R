@@ -679,11 +679,11 @@ dplyr::count(snake_totP_no_NA_ipip,ipip_level)
 snake_totP_no_NA_ipip$hrsd_level <- cut(snake_totP_no_NA_ipip$HRSD_no_suic, 3, include.lowest = TRUE)
 dplyr::count(snake_totP_no_NA_ipip,hrsd_level)
 
-library(ggplot2)
-ggplot(snake_totP_no_NA_ipip,aes(201-oppRank, appleChoice_wi_0, colour = factor(ipip_level))) +
-  geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
-  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
-  theme_bw()
+# library(ggplot2)
+# ggplot(snake_totP_no_NA_ipip,aes(201-oppRank, appleChoice_wi_0, colour = factor(ipip_level))) +
+#   geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
+#   scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+#   theme_bw()
 
 
 ##models with score
@@ -832,12 +832,12 @@ car::Anova(pm0_depP_ipip,'3')
 
 pP_dep_ipip_engage <- plot_model(pm0_depP_ipip, type = "est", show.p = TRUE, show.values = TRUE, title = "Sample 2 - score predicted by group and ipip", colors = c( "#008600","#c55a11"), terms = c("scale(trial)", "scale(ipip_total)", "scale(trial):scale(ipip_total)","gp_dep1", "scale(trial):gp_dep1"), order.terms = c(1,2,4,3,5)  ,sort.est = TRUE) + theme_bw()
 
-library(ggplot2)
-ggplot(snake_totP_no_NA_ipip,aes(scale(trial), score, colour = factor(ipip_level))) +
-  geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
-  scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
-  theme_bw()
-
+# library(ggplot2)
+# ggplot(snake_totP_no_NA_ipip,aes(scale(trial), score, colour = factor(ipip_level))) +
+#   geom_smooth(method = 'loess', span = 4, na.rm = TRUE) + facet_wrap(~gp_dep) +
+#   scale_fill_manual(values = c("#008600", "black", "#c55a11")) +
+#   theme_bw()
+# 
 
 pm0_ipipP <- lmer(score ~ scale(trial)*scale(ipip_total) + gp_dep + gender.x + scale(age_snake) + race + scale(gameExp) + (1|ID), data = snake_totP)
 summary(pm0_ipipP)
