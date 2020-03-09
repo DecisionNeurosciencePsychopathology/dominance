@@ -23,21 +23,6 @@ library(car)
 # clear environment
 rm(list=ls())
 
-#  for collinearity diagnostics
-vif.lme <- function (fit) {
-  ## adapted from rms::vif
-  v <- vcov(fit)
-  nam <- names(fixef(fit))
-  ## exclude intercepts
-  ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))
-  if (ns > 0) {
-    v <- v[-(1:ns), -(1:ns), drop = FALSE]
-    nam <- nam[-(1:ns)] }
-  d <- diag(v)^0.5
-  v <- diag(solve(v/(d %o% d)))
-  names(v) <- nam
-  v }
-
 ######################################
 ## glossary to dataset variables ##
 ######################################
@@ -88,12 +73,12 @@ cobra_tot_sample2_shrunk <- read.csv("cobra_tot_sample2_shrunk.csv")
 cobra_both <- read.csv("cobra_both.csv")
 
 
-### Table 1
+### Supplemental Table S1
 
 #Vancouver (sample 1)
 library(tableone)
 names(cobra_tot_sample1_shrunk)
-listVars <- c("age","gender","ethnicity_simp","household_incomeF","gameExp","dass21_depression_tot", "dass21dep_percentile","bpni_TOTAL","bpni_GANDIOSITY","bpni_VULNERABILITY","ffni_total","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM")
+listVars <- c("age","gender","ethnicity_simp","household_incomeF","gameExp","dass21_depression_tot", "dass21dep_percentile","ffni_total")
 catVars <- c("gender", "ethnicity_simp", "household_incomeF")
 table1 <- CreateTableOne(vars = listVars, data = cobra_tot_sample1_shrunk, factorVars = catVars)
 table1
@@ -101,7 +86,7 @@ table1
 #Pittsburgh (sample 2)
 library(tableone)
 names(cobra_tot_sample2_shrunk)
-listVars <- c("age_snake","gender.y","race","household_income","gameExp","HRSD","hrsd_percentile","bpni_TOTAL","bpni_GANDIOSITY","bpni_VULNERABILITY","ffni_total","ffni_GRANDIOSE_NARCISSISM", "ffni_VULNERABLE_NARCISSISM", "ipip_total")
+listVars <- c("age_snake","gender.y","race","household_income","gameExp","HRSD","hrsd_percentile","ffni_total", "ipip_total")
 catVars <- c("gender.y", "race")
 table1 <- CreateTableOne(vars = listVars, data = cobra_tot_sample2_shrunk, factorVars = catVars)
 table1
@@ -110,30 +95,21 @@ table1
 library(corrplot)
 library(data.table)
 
-## psychometric variables
-#Vancouver (sample 1)
-names(cobra_tot_sample1_shrunk)
-chars <- cobra_tot_sample1_shrunk[,c('bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM','dass21_depression_tot')]
-corrplot.mixed(cor(chars, method = "pearson", use = "na.or.complete"), upper.col = "black", number.cex = 1.1, tl.pos = 'lt', lower = 'circle', upper = 'number')
-
-#Pittsburgh (sample 2)
-chars <- cobra_tot_sample2_shrunk[,c('bpni_TOTAL', 'bpni_GANDIOSITY', 'bpni_VULNERABILITY','ffni_total','ffni_GRANDIOSE_NARCISSISM','ffni_VULNERABLE_NARCISSISM', 'ipip_total','HRSD')]
-corrplot.mixed(cor(chars, method = "pearson", use = "na.or.complete"), upper.col = "black", number.cex = 1.1, tl.pos = 'lt', lower = 'circle', upper = 'number')
-
-
-## design variables (output dimensions: 8 x 8)
-# Vancouver (sample 1)
-cobra_tot_sample1$close <- as.factor(cobra_tot_sample1$close)
-chars <- cobra_tot_sample1[,c('trial','oppRank_inv','win','scoreDiff','rankEnd.minus1_inv', 'appleChoice', 'rankChoice', 'score_new')]
+## correlation tables
+#Pittsburgh (sample 2) output: 9.5x8
+chars <- cobra_tot_sample2[,c('ffni_total','ipip_total','HRSD','trial','oppRank_inv','win','scoreDiff','rankEnd.minus1_inv', 'appleChoice', 'rankChoice', 'score_new')]
 chars$win <- as.numeric(chars$win)
-chars$scoreDiff <- abs(chars$scoreDiff)
-corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1, tl.pos = 'lt', upper = 'circle', lower = 'number')
+corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1, tl.pos = 'lt', lower = 'number', upper = 'circle')
 
-# Pittsburgh (sample 2)
-chars <- cobra_tot_sample2[,c('trial','oppRank_inv','win','scoreDiff','rankEnd.minus1_inv', 'appleChoice', 'rankChoice', 'score_new')]
-chars$win <- as.numeric(chars$win)
-chars$scoreDiff <- abs(chars$scoreDiff)
-corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1, tl.pos = 'lt', upper = 'circle', lower = 'number')
+#Vancouver (sample 1) output: 9x8 
+chars2 <- cobra_tot_sample1[,c('ffni_total','dass21_depression_tot','trial','oppRank_inv','win','scoreDiff','rankEnd.minus1_inv', 'appleChoice', 'rankChoice', 'score_new')]
+chars2$win <- as.numeric(chars2$win)
+corrplot.mixed(cor(chars2, method = "spearman", use = "na.or.complete"), lower.col = "black", number.cex = 1.1, tl.pos = 'lt', lower = 'number', upper = 'circle')
+
+## histograms of FFNI total scores (supplemental figure S2) output: 11x5.5
+ggplot(cobra_tot_sample1_shrunk, aes(x = ffni_total)) + geom_histogram(bins = 13) + geom_rug() + theme_bw()
+ggplot(cobra_tot_sample2_shrunk, aes(x = ffni_total)) + geom_histogram(bins = 13) + geom_rug() + theme_bw()
+
 
 
 #### Main analysis with linear mixed-effects models
@@ -141,7 +117,7 @@ corrplot.mixed(cor(chars, method = "spearman", use = "na.or.complete"), lower.co
 ### I. DESIGN VARIABLES
 
 ## Vancouver (sample 1)
-mappleA2_V <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
+mappleA2_V <- lmer(appleChoice_wi_0 ~ trial + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
 summary(mappleA2_V)
 car::Anova(mappleA2_V, type = 'III')
 
@@ -200,24 +176,7 @@ library(gridExtra)
 grid.arrange(pSample2_design_apple,pSample2_design_rank,pSample1_design_apple,pSample1_design_rank,
              layout_matrix = matrix(c(3,1,4,2), ncol=2, byrow=TRUE))
 
-# model summaries for Supplement
 
-library(stargazer)
-t <- stargazer(mappleA2_V, mappleA2_V_sens, type = "html", title="Design variables and covariates predicting point stealing in Sample 1",
-               align=TRUE, out="Design_Sample1_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA2_V, mrankA2_V_sens, type = "html", title="Design variables and covariates predicting rank buying in Sample 1",
-               align=TRUE, out="Design_Sample1_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA2_P, mappleA2_P_sens, type = "html", title="Design variables and covariates predicting point stealing in Sample 2",
-               align=TRUE, out="Design_Sample2_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA0_P, mrankA0_P_sens, type = "html", title="Design variables and covariates predicting rank buying in Sample 2",
-               align=TRUE, out="Design_Sample2_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
 
 ### II. TRAIT DOMINANCE in Pittsburgh sample (sample 2) - best-fitting models
 
@@ -241,51 +200,36 @@ mrankA2_ipip1_sens <- lmer(rankChoice_wi_0 ~ scale(ipip_total)*scale(trial) + wi
 summary(mrankA2_ipip1_sens)
 car::Anova(mrankA2_ipip1_sens, type = 'III')
 
-# model summary for supplement
-t <- stargazer(mappleA1_ipip2, mappleA1_ipip2_sens, type = "html", title="IPIP-DS score_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_dom_IPIP_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
 
-t <- stargazer(mrankA2_ipip1, mrankA2_ipip1_sens, type = "html", title="IPIP-DS score_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_dom_IPIP_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-# plots for manuscript (figure 3)
+# plots for manuscript (Figures 3A and 4A)
 a <- sd(cobra_tot_sample2_shrunk$ipip_total, na.rm = TRUE)
 b <- mean(cobra_tot_sample2_shrunk$ipip_total, na.rm = TRUE)
-b + 2*a
-b - 2*a
+b + a
+b - a
 
 library(emmeans)
-#dominance*opponent's rank (output dimension: 5 x 3)
-emmip(mappleA1_ipip2_sens, ipip_total ~ oppRank_inv, at = list(ipip_total = c(10,43), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+#dominance*trial interactions for point stealing and rank buying (output dimension: 4 x 3) - Figure 3A
+emmip(mappleA1_ipip2_sens, ipip_total ~ trial, at = list(ipip_total = c(18,35), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+  scale_fill_manual(values = c("#008600", "#c55a11")) +
+  scale_color_manual(values = c("#008600", "#c55a11"))
+
+emmip(mrankA2_ipip1_sens, ipip_total ~ trial, at = list(ipip_total = c(18,35), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+  scale_fill_manual(values = c("#008600", "#c55a11")) +
+  scale_color_manual(values = c("#008600", "#c55a11"))
+
+#dominance*opponent's rank (output dimension: 5 x 3) - Figure 4A
+emmip(mappleA1_ipip2_sens, ipip_total ~ oppRank_inv, at = list(ipip_total = c(18,35), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   theme_bw() +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
 
 
-#dominance*trial interactions for point stealing and rank buying (output dimension: 4 x 3)
-emmip(mappleA1_ipip2_sens, ipip_total ~ trial, at = list(ipip_total = c(10,43), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  scale_fill_manual(values = c("#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11"))
-
-emmip(mrankA2_ipip1_sens, ipip_total ~ trial, at = list(ipip_total = c(10,43), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  scale_fill_manual(values = c("#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11"))
 
 ### III. NARCISSISM - trial*narcissism interaction - best-fitting models
 
 ## Vancouver (Sample 1)
 
 # point stealing
-mappleA1_bpni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1)
-car::Anova(mappleA1_bpni1, type = 'III')
-
-mappleA1_bpni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1_sens)
-car::Anova(mappleA1_bpni1_sens, type = 'III')
-
 mappleA1_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
 summary(mappleA1_ffni1)
 car::Anova(mappleA1_ffni1, type = 'III')
@@ -294,53 +238,9 @@ mappleA1_ffni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + 
 summary(mappleA1_ffni1_sens)
 car::Anova(mappleA1_ffni1_sens, type = 'III')
 
-
-#grandiosity and vulnerability subscales for the BPNI (since significant trial*narcissism interaction with total score)
-mappleA1_bpni1_V <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_VULNERABILITY) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1_V)
-car::Anova(mappleA1_bpni1_V, type = 'III')
-
-mappleA1_bpni1_sensV <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_VULNERABILITY) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1_sensV)
-car::Anova(mappleA1_bpni1_sensV, type = 'III')
-
-mappleA1_bpni1_G <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_GANDIOSITY) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1_G)
-car::Anova(mappleA1_bpni1_G, type = 'III')
-
-mappleA1_bpni1_sensG <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_GANDIOSITY) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_bpni1_sensG)
-car::Anova(mappleA1_bpni1_sensG, type = 'III')
-
-# model summaries for supplement
-library(stargazer)
-t <- stargazer(mappleA1_bpni1, mappleA1_bpni1_sens, type = "html", title="BPNI total score_news added to models with design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_narcV_BPNI_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_ffni1, mappleA1_ffni1_sens, type = "html", title="FFNI total score_news added to models with design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_narcV_FFNI_2models_apples_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_bpni1_V, mappleA1_bpni1_sensV, type = "html", title="BPNI vulnerability subscore_news added to models with design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_narcV_BPNI_vul_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_bpni1_G, mappleA1_bpni1_sensG, type = "html", title="BPNI grandiosity subscore_news added to models with design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_narcV_BPNI_gran_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
+car::vif(mappleA1_ffni1_sens)
 
 # rank buying
-mrankA2_1_bpni1 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_bpni1)
-car::Anova(mrankA2_1_bpni1, type = 'III')
-
-mrankA2_1_bpni1_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_bpni1_sens)
-car::Anova(mrankA2_1_bpni1_sens, type = 'III')
-
-
 mrankA2_1_ffni1 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_total)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
 summary(mrankA2_1_ffni1)
 car::Anova(mrankA2_1_ffni1, type = 'III')
@@ -349,54 +249,12 @@ mrankA2_1_ffni1_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_total)*sc
 summary(mrankA2_1_ffni1_sens)
 car::Anova(mrankA2_1_ffni1_sens, type = 'III')
 
-vif.lme(mrankA2_1_ffni1_sens)
-
-#grandiosity and vulnerability subscales for the FFNI (since trial*narcissism interaction was significant with total score)
-mrankA2_1_ffni1V <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_ffni1V)
-car::Anova(mrankA2_1_ffni1V, type = 'III')
-
-mrankA2_1_ffni1V_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_ffni1V_sens)
-car::Anova(mrankA2_1_ffni1V_sens, type = 'III')
-
-mrankA2_1_ffni1G <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_ffni1G)
-car::Anova(mrankA2_1_ffni1G, type = 'III')
-
-mrankA2_1_ffni1G_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + scale(dass21_depression_tot) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA2_1_ffni1G_sens)
-car::Anova(mrankA2_1_ffni1G_sens, type = 'III')
-
-t <- stargazer(mrankA2_1_bpni1, mrankA2_1_bpni1_sens, type = "html", title="BPNI total score_news added to models with design variables predicting rank buying in Sample 1",
-               align=TRUE, out="feb2019_narcV_BPNI_2models_rank_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA2_1_ffni1, mrankA2_1_ffni1_sens, type = "html", title="FFNI total score added to models with design variables predicting rank buying in Sample 1",
-               align=TRUE, out="feb2019_narcV_FFNI_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA2_1_ffni1V, mrankA2_1_ffni1V_sens, type = "html", title="FFNI vulnerable narcissism score added to models with design variables predicting rank buying in Sample 1",
-               align=TRUE, out="feb2019_narcV_FFNI_vul_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA2_1_ffni1G, mrankA2_1_ffni1G_sens, type = "html", title="FFNI grandiose narcissism score added to models with design variables predicting rank buying in Sample 1",
-               align=TRUE, out="feb2019_narcG_FFNI__gran_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
+car::vif(mrankA2_1_ffni1_sens)
 
 
 ## Pittsburgh (Sample 2)
 
 # point stealing
-
-mappleA1_bpni1_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_bpni1_P)
-car::Anova(mappleA1_bpni1_P, type = 'III')
-
-mappleA1_bpni1_sens_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_bpni1_sens_P)
-car::Anova(mappleA1_bpni1_sens_P, type = 'III')
-
 mappleA1_ffni1_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
 summary(mappleA1_ffni1_P)
 car::Anova(mappleA1_ffni1_P, type = 'III')
@@ -405,50 +263,9 @@ mappleA1_ffni1_sens_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) 
 summary(mappleA1_ffni1_sens_P)
 car::Anova(mappleA1_ffni1_sens_P, type = 'III')
 
-#grandiosity and vulnerability subscales for the FFNI (since trial*narcissism interaction was significant with total score)
-mappleA1_ffni1V_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_ffni1V_P)
-car::Anova(mappleA1_ffni1V_P, type = 'III')
-
-mappleA1_ffni1V_sens_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_VULNERABLE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_ffni1V_sens_P)
-car::Anova(mappleA1_ffni1V_sens_P, type = 'III')
-
-mappleA1_ffni1G_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_ffni1G_P)
-car::Anova(mappleA1_ffni1G_P, type = 'III')
-
-mappleA1_ffni1G_sens_P <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_GRANDIOSE_NARCISSISM) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1_ffni1G_sens_P)
-car::Anova(mappleA1_ffni1G_sens_P, type = 'III')
-
-# model summaries for supplement
-t <- stargazer(mappleA1_bpni1_P, mappleA1_bpni1_sens_P, type = "text", title="BPNI total score_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_narcP_BPNI_2models_apples_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_ffni1_P, mappleA1_ffni1_sens_P, type = "html", title="FFNI total score_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_ffni1V_P, mappleA1_ffni1V_sens_P, type = "html", title="FFNI vulnerable narcissism subscore_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_vul_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_ffni1G_P, mappleA1_ffni1G_sens_P, type = "html", title="FFNI grandiose narcissism subscore_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_gran_2models_apples.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
+car::vif(mappleA1_ffni1_sens_P)
 
 # rank buying
-
-mrankA_bpni3_P <- lmer(rankChoice_wi_0 ~ scale(bpni_TOTAL)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_bpni3_P)
-car::Anova(mrankA_bpni3_P, type = 'III')
-
-mrankA_bpni3_sens_P <- lmer(rankChoice_wi_0 ~ scale(bpni_TOTAL)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_bpni3_sens_P)
-car::Anova(mrankA_bpni3_sens_P, type = 'III')
-
 mrankA_ffni3_P <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
 summary(mrankA_ffni3_P)
 car::Anova(mrankA_ffni3_P, type = 'III')
@@ -457,61 +274,36 @@ mrankA_ffni3_sens_P <- lmer(rankChoice_wi_0 ~ scale(ffni_total)*scale(trial)*sca
 summary(mrankA_ffni3_sens_P)
 car::Anova(mrankA_ffni3_sens_P, type = 'III')
 
-#grandiosity and vulnerability subscales for the FFNI (since trial*narcissism interaction was significant with total score)
-mrankA_ffni3V_P <- lmer(rankChoice_wi_0 ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_ffni3V_P)
-car::Anova(mrankA_ffni3V_P, type = 'III')
-
-mrankA_ffni3V_sens_P <- lmer(rankChoice_wi_0 ~ scale(ffni_VULNERABLE_NARCISSISM)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_ffni3V_sens_P)
-car::Anova(mrankA_ffni3V_sens_P, type = 'III')
-
-mrankA_ffni3G_P <- lmer(rankChoice_wi_0 ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_ffni3G_P)
-car::Anova(mrankA_ffni3G_P, type = 'III')
-
-mrankA_ffni3G_sens_P <- lmer(rankChoice_wi_0 ~ scale(ffni_GRANDIOSE_NARCISSISM)*scale(trial) + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + win + scale(rankChoice_wi_0.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp)  + scale(HRSD) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA_ffni3G_sens_P)
-car::Anova(mrankA_ffni3G_sens_P, type = 'III')
-
-# model summaries for Supplement
-t <- stargazer(mrankA_bpni3_P, mrankA_bpni3_sens_P, type = "html", title="BPNI total score_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_narcP_BPNI_2model_rank_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA_ffni3_P, mrankA_ffni3_sens_P, type = "html", title="FFNI total score_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA_ffni3V_P, mrankA_ffni3V_sens_P, type = "html", title="FFNI vulnerable narcissism subscore_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_vul_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA_ffni3G_P, mrankA_ffni3G_sens_P, type = "html", title="FFNI grandiose narcissism subscore_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_narcP_FFNI_gran_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
+car::vif(mrankA_ffni3_sens_P)
 
 
-## plots for manuscript (Figure 4)
+## plots for manuscript (Figure 3B)
 library(emmeans)
 
 # Vancouver (sample 1)
-emmip(mappleA1_bpni1_sens, bpni_TOTAL ~ trial, at = list(bpni_TOTAL = c(14,100), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  scale_fill_manual(values = c("#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11"))
+a <- sd(cobra_tot_sample1_shrunk$ffni_total, na.rm = TRUE)
+b <- mean(cobra_tot_sample1_shrunk$ffni_total, na.rm = TRUE)
+b + a
+b - a
 
-emmip(mrankA2_1_ffni1_sens, ffni_total ~ trial, at = list(ffni_total = c(97,209), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+emmip(mrankA2_1_ffni1_sens, ffni_total ~ trial, at = list(ffni_total = c(125,181), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
 
 #Pittsburgh (sample 2)
-emmip(mappleA1_ffni1_sens_P, ffni_total ~ trial, at = list(ffni_total = c(83,185), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+a <- sd(cobra_tot_sample2_shrunk$ffni_total, na.rm = TRUE)
+b <- mean(cobra_tot_sample2_shrunk$ffni_total, na.rm = TRUE)
+b + a
+b - a
+
+emmip(mappleA1_ffni1_sens_P, ffni_total ~ trial, at = list(ffni_total = c(109,160), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
 
-emmip(mrankA_ffni3_sens_P, ffni_total ~ trial, at = list(ffni_total = c(83,185), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+emmip(mrankA_ffni3_sens_P, ffni_total ~ trial, at = list(ffni_total = c(109,160), trial = c(1,12,24)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
+
 
 
 ### IV. DEPRESSION (best-fitting models)
@@ -519,7 +311,6 @@ emmip(mrankA_ffni3_sens_P, ffni_total ~ trial, at = list(ffni_total = c(83,185),
 ## Vancouver (sample 1)
 
 # point stealing
-
 mappleA1_dep5 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(dass21_depression_tot)*scale(oppRank_inv) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
 summary(mappleA1_dep5)
 car::Anova(mappleA1_dep5, type = 'III')
@@ -528,22 +319,11 @@ mappleA1_dep5_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.
 summary(mappleA1_dep5_sens)
 car::Anova(mappleA1_dep5_sens, type = 'III')
 
-vif.lme(mappleA1_dep5_sens)
-
-# rank buying
-
-mrankA1_dep1 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(oppRank_inv)*scale(dass21_depression_tot) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA1_dep1)
-car::Anova(mrankA1_dep1, type = 'III')
-
-mrankA1_dep1_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(oppRank_inv)*scale(dass21_depression_tot) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mrankA1_dep1_sens)
-car::Anova(mrankA1_dep1_sens, type = 'III')
+car::vif(mappleA1_dep5_sens)
 
 ## Pittsburgh (sample 2)
 
 # point stealing
-
 mappleA1_dep2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
 summary(mappleA1_dep2)
 car::Anova(mappleA1_dep2, type = 'III')
@@ -552,200 +332,50 @@ mappleA1_dep2_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.
 summary(mappleA1_dep2_sens)
 car::Anova(mappleA1_dep2_sens, type = 'III')
 
-
-## rank buying: no significant interaction with depression scale
-
-mrankA2_dep1 <- lmer(rankChoice_wi_0 ~ scale(HRSD)*scale(oppRank_inv)*scale(trial) + win + scale(201-rankStart) + scale(score_new) + scale(rankChoice_wi_0.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA2_dep1)
-car::Anova(mrankA2_dep1, type = 'III')
-
-mrankA2_dep1_sens <- lmer(rankChoice_wi_0 ~ scale(HRSD)*scale(oppRank_inv)*scale(trial) + win + scale(201-rankStart) + scale(oppRank_inv)*scale(trial) + scale(score_new) + scale(rankChoice_wi_0.minus1)  + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mrankA2_dep1_sens)
-car::Anova(mrankA2_dep1_sens, type = 'III')
-
-#model summaries for Supplement
-t <- stargazer(mappleA1_dep5, mappleA1_dep5_sens, type = "html", title="DASS21 depression score_news added to models with design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_depV_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA1_dep1, mrankA1_dep1_sens, type = "html", title="DASS21 depression score_news added to models with design variables predicting rank buying in Sample 1",
-               align=TRUE, out="feb2019_depV_2models_rank.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_dep2, mappleA1_dep2_sens, type = "html", title="HRSD depression score_news added to models with design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_depP_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mrankA2_dep1, mrankA2_dep1_sens, type = "html", title="HRSD depression score_news added to models with design variables predicting rank buying in Sample 2",
-               align=TRUE, out="feb2019_depP_2models_rank_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
+car::vif(mappleA1_dep2_sens)
 
 
-#plots for manuscript (figure 5, panel A)
+#plots for manuscript (figure 4, panel B)
+library(emmeans)
 
+# Vancouver (Sample 1)
 a <- sd(cobra_tot_sample1_shrunk$dass21_depression_tot, na.rm = TRUE)
 b <- mean(cobra_tot_sample1_shrunk$dass21_depression_tot, na.rm = TRUE)
-b + 2*a
-b - 2*a
+b + a
+b - a
 
-library(emmeans)
-emmip(mappleA1_dep5_sens, dass21_depression_tot ~ oppRank_inv, at = list(dass21_depression_tot = c(0,27), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+emmip(mappleA1_dep5_sens, dass21_depression_tot ~ oppRank_inv, at = list(dass21_depression_tot = c(1,18), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   theme_bw() +
-  #  scale_y_reverse () +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
 
-emmip(mrankA1_dep1_sens, dass21_depression_tot*oppRank_inv ~ trial, at = list(dass21_depression_tot = c(0,27), oppRank_inv = c(1,200), trial = c(1,24)), CIs = TRUE, col = c("#008600", "#c55a11","#008600", "#c55a11","#008600", "#c55a11")) +
-  theme_bw() +
-  scale_y_reverse () +
-  scale_fill_manual(values = c("#008600", "#c55a11","#008600", "#c55a11","#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11","#008600", "#c55a11","#008600", "#c55a11")) +
-  facet_wrap(~oppRank_inv)
-
-
+# Pittsburgh (Sample 2)
 a <- sd(cobra_tot_sample2_shrunk$HRSD, na.rm = TRUE)
 b <- mean(cobra_tot_sample2_shrunk$HRSD, na.rm = TRUE)
-b + 2*a
-b - 2*a
+b + a
+b - a
 
-emmip(mappleA1_dep2_sens, HRSD ~ oppRank_inv, at = list(HRSD = c(3,28), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
+emmip(mappleA1_dep2_sens, HRSD ~ oppRank_inv, at = list(HRSD = c(9,22), oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("#008600", "#c55a11")) +
   theme_bw() +
-  #  scale_y_reverse () +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
 
-### V. DEPRESSION*NARCISSISM INTERACTION
-
-# Pittsburgh (sample 2) - significant interaction with the FFNI and both of its subscales
 
 
-mappleA1P_dep_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1)
-car::Anova(mappleA1P_dep_ffni1, type = 'III')
+### V. POOLED ANALYSIS
 
-mappleA1P_dep_ffni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1_sens)
-car::Anova(mappleA1P_dep_ffni1_sens, type = 'III')
-
-vif.lme(mappleA1P_dep_ffni1_sens)
-
-mappleA1P_dep_bpni1 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(bpni_TOTAL)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_bpni1)
-car::Anova(mappleA1P_dep_bpni1, type = 'III')
-
-mappleA1P_dep_bpni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(bpni_TOTAL)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_bpni1_sens)
-car::Anova(mappleA1P_dep_bpni1_sens, type = 'III')
-
-#grandiosity and vulnerability FFNI subscales
-mappleA1P_dep_ffni1V <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_VULNERABLE_NARCISSISM)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1V)
-car::Anova(mappleA1P_dep_ffni1V, type = 'III')
-
-mappleA1P_dep_ffni1V_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_VULNERABLE_NARCISSISM)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1V_sens)
-car::Anova(mappleA1P_dep_ffni1V_sens, type = 'III')
-
-vif.lme(mappleA1P_dep_ffni1V)
-
-mappleA1P_dep_ffni1G <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_GRANDIOSE_NARCISSISM)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1G)
-car::Anova(mappleA1P_dep_ffni1G, type = 'III')
-
-mappleA1P_dep_ffni1G_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_GRANDIOSE_NARCISSISM)*scale(oppRank_inv)*scale(HRSD) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age_snake) + scale(household_income_log) + gender.y + scale(education) + race + scale(gameExp) + scale(household_income_log) + (1|ID),  data = cobra_tot_sample2, na.action = na.omit)
-summary(mappleA1P_dep_ffni1G_sens)
-car::Anova(mappleA1P_dep_ffni1G_sens, type = 'III')
-
-#model summaries for Supplement
-t <- stargazer(mappleA1P_dep_ffni1, mappleA1P_dep_ffni1_sens, type = "html", title="FFNI added to models with depression and design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_depP_ffni_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1P_dep_ffni1V, mappleA1P_dep_ffni1V_sens, type = "html", title="FFNI vulnerable narcissism added to models with depression and design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_depP_ffniV_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1P_dep_ffni1G, mappleA1P_dep_ffni1G_sens, type = "html", title="FFNI grandiose narcissism added to models with depression and design variables predicting point stealing in Sample 2",
-               align=TRUE, out="feb2019_depP_ffniG_2models_apple.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-#plots for manuscript (figure 5, panel B for FFNI total score and Supplement for grandiosity and vulnerability subscales)
-a <- sd(cobra_tot_sample2_shrunk$ffni_total, na.rm = TRUE)
-b <- mean(cobra_tot_sample2_shrunk$ffni_total, na.rm = TRUE)
-b + 2*a
-b - 2*a
-
-emmip(mappleA1P_dep_ffni1_sens, ffni_total*HRSD ~ oppRank_inv, at = list(HRSD = c(3,28), oppRank_inv = c(1,100,200), ffni_total = c(83, 185)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  theme_bw() +
-  #  scale_y_reverse () +
-  scale_fill_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  facet_wrap(~HRSD)
-
-
-a <- sd(cobra_tot_sample2_shrunk$ffni_VULNERABLE_NARCISSISM, na.rm = TRUE)
-b <- mean(cobra_tot_sample2_shrunk$ffni_VULNERABLE_NARCISSISM, na.rm = TRUE)
-b + 2*a
-b - 2*a
-
-emmip(mappleA1P_dep_ffni1V_sens, ffni_VULNERABLE_NARCISSISM*HRSD ~ oppRank_inv, at = list(HRSD = c(3,28), oppRank_inv = c(1,100,200), ffni_VULNERABLE_NARCISSISM = c(14, 68)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  theme_bw() +
-  scale_fill_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  facet_wrap(~HRSD)
-
-a <- sd(cobra_tot_sample2_shrunk$ffni_GRANDIOSE_NARCISSISM, na.rm = TRUE)
-b <- mean(cobra_tot_sample2_shrunk$ffni_GRANDIOSE_NARCISSISM, na.rm = TRUE)
-b + 2*a
-b - 2*a
-
-emmip(mappleA1P_dep_ffni1G_sens, ffni_GRANDIOSE_NARCISSISM*HRSD ~ oppRank_inv, at = list(HRSD = c(3,28), oppRank_inv = c(1,100,200), ffni_GRANDIOSE_NARCISSISM = c(54, 133)), CIs = TRUE, col = c("#008600", "#c55a11")) +
-  theme_bw() +
-  #  scale_y_reverse () +
-  scale_fill_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  scale_color_manual(values = c("#008600", "#c55a11", "#008600", "#c55a11")) +
-  facet_wrap(~HRSD)
-
-
-# Vancouver (sample 1) - the interaction of Sample 1 is not present
-mappleA1_dep_bpni1 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(bpni_TOTAL)*scale(dass21_depression_tot)*scale(oppRank_inv) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_dep_bpni1)
-car::Anova(mappleA1_dep_bpni1, type = 'III')
-
-mappleA1_dep_bpni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(bpni_TOTAL)*scale(dass21_depression_tot)*scale(oppRank_inv) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_dep_bpni1_sens)
-car::Anova(mappleA1_dep_bpni1_sens, type = 'III')
-
-
-mappleA1_dep_ffni1 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(dass21_depression_tot)*scale(oppRank_inv) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_dep_ffni1)
-car::Anova(mappleA1_dep_ffni1, type = 'III')
-
-mappleA1_dep_ffni1_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(dass21_depression_tot)*scale(oppRank_inv) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(gameExp) + (1|ID),  data = cobra_tot_sample1, na.action = na.omit)
-summary(mappleA1_dep_ffni1_sens)
-car::Anova(mappleA1_dep_ffni1_sens, type = 'III')
-
-
-t <- stargazer(mappleA1_dep_bpni1, mappleA1_dep_bpni1_sens, type = "html", title="BPNI added to models with depression and design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_depV_bpni_2models_apple_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-
-t <- stargazer(mappleA1_dep_ffni1, mappleA1_dep_ffni1_sens, type = "html", title="FFNI added to models with depression and design variables predicting point stealing in Sample 1",
-               align=TRUE, out="feb2019_depV_ffni_2models_apple_NS.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-
-### VI. POOLED ANALYSIS
-
-# design variables
+# (i) design variables
 mappleA2_both_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1)  + sample +  scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mappleA2_both_sens)
 car::Anova(mappleA2_both_sens, type = 'III')
 
+car::vif(mappleA2_both_sens)
+
 mrankA2_both_sens <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + sample + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mrankA2_both_sens)
 car::Anova(mrankA2_both_sens, type = 'III')
+
+car::vif(mrankA2_both_sens)
 
 # interactions with sample
 mappleA2_both_sens2 <- lmer(appleChoice_wi_0 ~ scale(trial)*sample + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1)*sample + scale(201-rankEnd.minus1)*sample +  scale(age) + scale(household_income)*sample + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep)*sample + (1|ID),  data = cobra_both, na.action = na.omit)
@@ -760,7 +390,6 @@ mappleA2_both_sens4 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win
 summary(mappleA2_both_sens4)
 car::Anova(mappleA2_both_sens4, type = 'III')
 
-
 mrankA2_both_sens2 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(oppRank_inv)*sample + win + scale(score_new) + scale(201-rankStart)*sample + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income)*sample + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep)*sample + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mrankA2_both_sens2)
 car::Anova(mrankA2_both_sens2, type = 'III')
@@ -770,61 +399,63 @@ summary(mrankA2_both_sens3)
 car::Anova(mrankA2_both_sens3, type = 'III')
 
 
-# with narcissistic scales
-
-mappleA1_bpni1_sens_both <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + sample + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mappleA1_bpni1_sens_both)
-car::Anova(mappleA1_bpni1_sens_both, type = 'III')
-
+# (ii) with narcissistic scales
 mappleA1_ffni1_sens_both <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + sample + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mappleA1_ffni1_sens_both)
 car::Anova(mappleA1_ffni1_sens_both, type = 'III')
 
-mrankA2_1_bpni1_sens_both <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + sample + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mrankA2_1_bpni1_sens_both)
-car::Anova(mrankA2_1_bpni1_sens_both, type = 'III')
+car::vif(mappleA1_ffni1_sens_both)
 
 mrankA2_1_ffni1_sens_both <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_total)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + sample + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mrankA2_1_ffni1_sens_both)
 car::Anova(mrankA2_1_ffni1_sens_both, type = 'III')
 
-# interactions with sample
-mappleA1_bpni1_sens_both2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*sample + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mappleA1_bpni1_sens_both2)
-car::Anova(mappleA1_bpni1_sens_both2, type = 'III')
+car::vif(mrankA2_1_ffni1_sens_both)
 
+
+# sensitivity analysis of narcissism with the BPNI scale
+mappleA1_bpni1_sens_both <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + sample + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
+summary(mappleA1_bpni1_sens_both)
+car::Anova(mappleA1_bpni1_sens_both, type = 'III')
+
+car::vif(mappleA1_bpni1_sens_both)
+
+mrankA2_1_bpni1_sens_both <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL) + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + sample + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
+summary(mrankA2_1_bpni1_sens_both)
+car::Anova(mrankA2_1_bpni1_sens_both, type = 'III')
+
+car::vif(mrankA2_1_bpni1_sens_both)
+
+
+# interactions with sample
 mappleA1_ffni1_sens_both2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(ffni_total)*sample + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mappleA1_ffni1_sens_both2)
 car::Anova(mappleA1_ffni1_sens_both2, type = 'III')
-
-mrankA2_1_bpni1_sens_both2 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*sample + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mrankA2_1_bpni1_sens_both2)
-car::Anova(mrankA2_1_bpni1_sens_both2, type = 'III')
 
 mrankA2_1_ffni1_sens_both2 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(ffni_total)*scale(oppRank_inv)*sample + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mrankA2_1_ffni1_sens_both2)
 car::Anova(mrankA2_1_ffni1_sens_both2, type = 'III')
 
+mappleA1_bpni1_sens_both2 <- lmer(appleChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*sample + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
+summary(mappleA1_bpni1_sens_both2)
+car::Anova(mappleA1_bpni1_sens_both2, type = 'III')
 
-# with depression
+mrankA2_1_bpni1_sens_both2 <- lmer(rankChoice_wi_0 ~ scale(trial)*scale(bpni_TOTAL)*sample + scale(trial)*scale(oppRank_inv) + win + scale(score_new) + scale(201-rankStart) + scale(rankChoice_wi_0.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
+summary(mrankA2_1_bpni1_sens_both2)
+car::Anova(mrankA2_1_bpni1_sens_both2, type = 'III')
+
+
+# (iv) with depression
 mappleA1_dep2_sens_both <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(dep) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + sample + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mappleA1_dep2_sens_both)
 car::Anova(mappleA1_dep2_sens_both, type = 'III')
+
+car::vif(mappleA1_dep2_sens_both)
 
 #interaction with sample
 mappleA1_dep2_sens_both2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(oppRank_inv)*scale(dep)*sample + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) +  ethnicity_simp + gender + scale(education) + scale(gameExp) + scale(dep) + (1|ID),  data = cobra_both, na.action = na.omit)
 summary(mappleA1_dep2_sens_both2)
 car::Anova(mappleA1_dep2_sens_both2, type = 'III')
-
-# with depression and narcissism
-mappleA1P_dep_ffni1_sens_both <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(oppRank_inv)*scale(dep) + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + sample + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mappleA1P_dep_ffni1_sens_both)
-car::Anova(mappleA1P_dep_ffni1_sens_both, type = 'III')
-
-#interaction with sample
-mappleA1P_dep_ffni1_sens_both2 <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + win.minus1 + scale(ffni_total)*scale(oppRank_inv)*scale(dep)*sample + scale(oppRank_inv)*scale(score_new.minus1) + scale(201-rankEnd.minus1) + scale(age) + scale(household_income) + ethnicity_simp + gender + scale(education) + scale(gameExp) + (1|ID),  data = cobra_both, na.action = na.omit)
-summary(mappleA1P_dep_ffni1_sens_both2)
-car::Anova(mappleA1P_dep_ffni1_sens_both2, type = 'III')
 
 
 ##############################
@@ -840,29 +471,7 @@ mappleA1_GRdep2_sens <- lmer(appleChoice_wi_0 ~ scale(trial) + close.minus1 + wi
 summary(mappleA1_GRdep2_sens)
 car::Anova(mappleA1_GRdep2_sens, type = 'III')
 
-# models summaries and plots for Supplement
-t <- stargazer(mappleA1_GRdep1_sens,type = "html", title = "Categorical analysis of depression in Sample 2 for additional validation",
-               align=TRUE, out="feb2019_dep_CAT.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-t <- stargazer(mappleA1_GRdep2_sens,type = "html", title = "Categorical analysis of depression in Sample 2 for additional validation",
-               align=TRUE, out="feb2019_dep_CAT2.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
-emmip(mappleA1_GRdep1_sens, group_dep ~ oppRank_inv, at = list(oppRank_inv = c(1,100,200)), CIs = TRUE, col = c("grey20", "grey20")) +
-  theme_bw() +
-  #  scale_y_reverse () +
-  scale_fill_manual(values = c("grey20", "grey20")) +
-  scale_color_manual(values = c("grey20", "grey20")) +
-  facet_wrap(~group_dep)
-
-
-emmip(mappleA1_GRdep2_sens, group_dep*ffni_total ~ oppRank_inv, at = list(oppRank_inv = c(1,100,200), ffni_total = c(83,185)), CIs = TRUE, col = c("#008600", "#c55a11","#008600", "#c55a11")) +
-  theme_bw() +
-  #  scale_y_reverse () +
-  scale_fill_manual(values = c("#008600", "#008600", "#c55a11","#c55a11")) +
-  scale_color_manual(values = c("#008600", "#008600", "#c55a11","#c55a11")) +
-  facet_wrap(~group_dep)
+car::vif(mappleA1_GRdep2_sens)
 
 
 ## Performance analyses
@@ -875,7 +484,7 @@ pm0allV <- lmer(score_new ~ scale(trial) + gender + scale(age) + scale(oppRank_i
 summary(pm0allV)
 car::Anova(pm0allV,'3')
 
-vif.lme(pm0allP)
+car::vif(pm0allP)
 
 #ipip (in Sample 2)
 pm0allP_ipip1 <- lmer(score_new ~ scale(trial)*scale(ipip_total) + scale(oppRank_inv)*scale(ipip_total) + (1|ID), data = cobra_tot_sample2)
@@ -886,7 +495,7 @@ pm0allP_ipip2 <- lmer(score_new ~ scale(trial)*scale(ipip_total) + scale(oppRank
 summary(pm0allP_ipip2)
 car::Anova(pm0allP_ipip2,'3')
 
-vif.lme(pm0allP_ipip2)
+car::vif(pm0allP_ipip2)
 
 #narcissism
 pm0allV <- lmer(score_new ~ scale(trial)*scale(bpni_TOTAL) + gender + scale(age) + scale(oppRank) + win.minus1 + scale(gameExp) + scale(appleChoice) + ethnicity_simp + (1|ID), data = cobra_tot_sample1) 
@@ -932,9 +541,4 @@ emmip(pm0allP_ipip2, ipip_total ~ trial, at = list(ipip_total = c(10,43), trial 
   theme_bw() +
   scale_fill_manual(values = c("#008600", "#c55a11")) +
   scale_color_manual(values = c("#008600", "#c55a11"))
-
-t <- stargazer(pm0allP_dep_dom1, type = "html", title="IPIP-DS score added to model predicting score",
-               align=TRUE, out="feb2019_score_ipip.htm", digits = 2,single.row=TRUE, star.cutoffs = c(0.05, 0.01, 0.001),
-               no.space=TRUE)
-
 
